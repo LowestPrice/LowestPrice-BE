@@ -5,15 +5,15 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class MagazineService {
   constructor(private readonly prisma: PrismaService) {}
+  // Todo: 매거진 상세조회, 수정, 삭제 시 매거진 존재하는지 확인하는 로직 추가
 
-  async create(data: Prisma.MagazineCreateInput) {
+  async create(data: Prisma.MagazineCreateInput): Promise<object> {
     try {
       const magazine: Magazine | null = await this.prisma.magazine.create({
         data,
       });
-      if (magazine) {
-        return { message: '매거진 등록에 성공했습니다.' };
-      }
+
+      return { message: '매거진 등록에 성공했습니다.' };
     } catch (err) {
       throw new HttpException(
         '서버 내부 에러가 발생했습니다.',
@@ -22,37 +22,72 @@ export class MagazineService {
     }
   }
 
-  async findAll() {
-    const magazines: Magazine[] | null = await this.prisma.magazine.findMany();
-    //? res 할 때 편하게 반환 할 수 있는 형식? 이후에 수정
-    return magazines;
+  async findAll(): Promise<object> {
+    const magazines: Object[] | null = await this.prisma.magazine.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        magazineId: true,
+        title: true,
+        content: true,
+        mainImage: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return { data: magazines };
   }
 
-  async findOne(id: number) {
-    const magazine: Magazine | null = await this.prisma.magazine.findUnique({
+  async findOne(id: number): Promise<object> {
+    const magazine: Object | null = await this.prisma.magazine.findUnique({
       where: {
         magazineId: id,
       },
+      select: {
+        magazineId: true,
+        title: true,
+        content: true,
+        mainImage: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
-    return magazine;
+    return { data: magazine };
   }
 
-  async update(id: number, data: Prisma.MagazineUpdateInput) {
+  async update(id: number, data: Prisma.MagazineUpdateInput): Promise<object> {
+    const isExist: Object = await this.findOne(id);
+    if (!isExist['data']) {
+      throw new HttpException(
+        '해당 매거진이 존재하지 않습니다.',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
     const magazine: Magazine | null = await this.prisma.magazine.update({
       where: {
         magazineId: id,
       },
       data: data,
     });
-    return magazine;
+    return { message: '매거진 수정에 성공했습니다.' };
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<object> {
+    const isExist: Object = await this.findOne(id);
+    if (!isExist['data']) {
+      throw new HttpException(
+        '해당 매거진이 존재하지 않습니다.',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
     const magazine: Magazine | null = await this.prisma.magazine.delete({
       where: {
         magazineId: id,
       },
     });
-    return magazine;
+    return { message: '매거진 삭제에 성공했습니다.' };
   }
 }

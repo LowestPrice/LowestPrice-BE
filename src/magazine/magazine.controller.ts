@@ -28,12 +28,13 @@ export class MagazineController {
     return this.magazineService.findAll();
   }
 
-  //* 매기진 상세 조회
+  //* 매거진 상세 조회
   @Get('/:magazineId')
   findOne(@Param('magazineId') magazineId: number) {
     return this.magazineService.findOne(magazineId);
   }
 
+  //* 매거진 수정
   @Patch('/:magazineId')
   update(
     @Param('magazineId') magazineId: number,
@@ -42,6 +43,7 @@ export class MagazineController {
     return this.magazineService.update(magazineId, updateMagazineDto);
   }
 
+  //* 매거진 삭제
   @Delete('/:magazineId')
   remove(@Param('magazineId') magazineId: number) {
     return this.magazineService.remove(magazineId);
