@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Magazine, Prisma } from '@prisma/client';
+import { LikeMagazine, Magazine, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -89,5 +89,46 @@ export class MagazineService {
       },
     });
     return { message: '매거진 삭제에 성공했습니다.' };
+  }
+
+  async setLike(magazineId: number, userId: number) {
+    //* 0. 매거진 존재 여부 확인
+    const isExist: Object = await this.findOne(magazineId);
+    if (!isExist['data']) {
+      throw new HttpException(
+        '해당 매거진이 존재하지 않습니다.',
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    //* 1. '좋아요' 여부 확인
+    const isLike: LikeMagazine | null =
+      await this.prisma.likeMagazine.findFirst({
+        where: {
+          MagazineId: magazineId,
+          UserId: userId,
+        },
+      });
+
+    //* 1-1. '좋아요' 안 했으면 좋아요 등록
+    if (!isLike) {
+      await this.prisma.likeMagazine.create({
+        data: {
+          MagazineId: magazineId,
+          UserId: userId,
+        },
+      });
+
+      return { message: '매거진 좋아요 등록에 성공했습니다.' };
+    }
+
+    //* 1-2. '좋아요' 했으면 좋아요 취소
+    await this.prisma.likeMagazine.delete({
+      where: {
+        likeMagazineId: isLike.likeMagazineId,
+      },
+    });
+
+    return { message: '매거진 좋아요 취소에 성공했습니다.' };
   }
 }

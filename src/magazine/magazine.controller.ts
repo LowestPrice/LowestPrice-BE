@@ -48,4 +48,14 @@ export class MagazineController {
   remove(@Param('magazineId') magazineId: number) {
     return this.magazineService.remove(magazineId);
   }
+
+  //* 좋아요
+  //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
+  @Post('/:magazineId/user/:userId/like')
+  setLike(
+    @Param('magazineId') magazineId: number,
+    @Param('userId') userId: number //* param 여러개 값 가져올 때, 똑같이 추가해주면 됨
+  ) {
+    return this.magazineService.setLike(magazineId, userId);
+  }
 }
