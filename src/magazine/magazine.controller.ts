@@ -29,6 +29,7 @@ export class MagazineController {
   }
 
   //! 라우팅 경로 문제로 코드 위로 올림
+  //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
   //* 좋아요 조회
   @Get('/user/:userId/like')
   getLikes(@Param('userId') userId: number) {
@@ -56,8 +57,8 @@ export class MagazineController {
     return this.magazineService.remove(magazineId);
   }
 
-  //* 좋아요
   //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
+  //* 좋아요 설정
   @Post('/:magazineId/user/:userId/like')
   setLike(
     @Param('magazineId') magazineId: number,
