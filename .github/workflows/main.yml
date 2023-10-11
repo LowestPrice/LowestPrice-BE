@@ -1,0 +1,27 @@
+name: Build and Deploy to EC2(main)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setting:
+    runs-on: ubuntu-latest
+    steps:
+     # 해당 branch의 최신 commit에 checkout
+      - name: checkout commit
+        uses: actions/checkout@v3
+
+      # nodejs 환경 세팅
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+      
+      # 의존성 설치
+      - name: install dependency
+        run: npm install
+
+      # 테스트 실행
+      - name: start test
+        run: npm test
