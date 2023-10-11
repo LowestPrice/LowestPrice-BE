@@ -9,7 +9,10 @@ export class getProductDTO extends PickType( ProductEntity, [
     'productName',
     'productImage',
     'isOutOfStock',
-    'originalPrice'
+    'originalPrice',
+    'currentPrice',
+    'discountRate',
+    'cardDiscount'
 ]) {}
 
 

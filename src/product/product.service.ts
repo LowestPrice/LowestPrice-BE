@@ -21,5 +21,11 @@ export class ProductService {
     // 상품 상세 조회
     async getProductDetail(productId: number): Promise<Product> {
         return this.productRepository.getProductDetail(productId);
+
+        // return product.map(product => ({
+        //     ...product,
+        //     coupangItemId: product.coupangItemId.toString(),  // BigInt를 문자열로 변환
+        //     coupangVendorId: product.coupangVendorId.toString(), // BigInt를 문자열로 변환
+        // }));
     }
 }

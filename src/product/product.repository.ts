@@ -18,7 +18,8 @@ export class ProductRepository {
                 isOutOfStock: true,
                 originalPrice: true,
                 currentPrice: true,
-            
+                discountRate: true,
+                cardDiscount: true,
                 ProductCategory: {
                     select: {
                         Category: {
