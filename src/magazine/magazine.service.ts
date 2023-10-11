@@ -132,7 +132,7 @@ export class MagazineService {
     return { message: '매거진 좋아요 취소에 성공했습니다.' };
   }
 
-  async getLikes(userId: number) {
+  async getLikes(userId: number): Promise<object> {
     const LikeMagazines: Object | null =
       await this.prisma.likeMagazine.findMany({
         where: {
