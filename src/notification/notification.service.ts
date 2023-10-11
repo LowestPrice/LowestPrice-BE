@@ -58,4 +58,36 @@ export class NotificationService {
 
     return { message: '알림 취소에 성공했습니다.' };
   }
+
+  //* 알림 설정한 상품 조회
+  async findAll(userId: number): Promise<object> {
+    const products: Object[] | null = await this.prisma.userProduct.findMany({
+      where: {
+        UserId: userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        Product: {
+          include: {
+            ProductCategory: {
+              select: {
+                Category: {
+                  select: {
+                    categoryId: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    //! BigInt json으로 넘길 때, string으로 타입 변환 필요
+    //! res 형식 알맞게 설정 필요
+    return { data: products };
+  }
 }
