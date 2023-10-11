@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ProductService } from './product.service';
 
 @Controller('product')
@@ -7,7 +7,7 @@ export class ProductController {
 
     // 상품 전체 조회 
     @Get()
-    getAllProducts() {
+    getAllProducts(): Promise<object> {
         return this.productService.getAllProducts();
     }
 
@@ -16,5 +16,4 @@ export class ProductController {
     getProductDetail(@Param('productId') productId: number) {
         return this.productService.getProductDetail(+productId);
     }
-
 }

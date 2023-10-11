@@ -6,6 +6,7 @@ import { PrismaClient, Product } from "@prisma/client";
 export class ProductRepository {
     constructor(private readonly prisma: PrismaClient) {}
 
+    // 상품 전체 조회 
     async getAllProducts() {
         const product = await this.prisma.product.findMany({
             select: {
@@ -17,6 +18,7 @@ export class ProductRepository {
                 isOutOfStock: true,
                 originalPrice: true,
                 currentPrice: true,
+            
                 ProductCategory: {
                     select: {
                         Category: {
@@ -25,11 +27,6 @@ export class ProductRepository {
                                 name: true,
                             },
                         },
-                    },
-                },
-                PriceHistory: {
-                    select: {
-                        discountRate: true,
                     },
                 },
             },
