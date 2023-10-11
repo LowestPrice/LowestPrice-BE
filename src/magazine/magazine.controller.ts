@@ -28,6 +28,13 @@ export class MagazineController {
     return this.magazineService.findAll();
   }
 
+  //! 라우팅 경로 문제로 코드 위로 올림
+  //* 좋아요 조회
+  @Get('/user/:userId/like')
+  getLikes(@Param('userId') userId: number) {
+    return this.magazineService.getLikes(userId);
+  }
+
   //* 매거진 상세 조회
   @Get('/:magazineId')
   findOne(@Param('magazineId') magazineId: number) {

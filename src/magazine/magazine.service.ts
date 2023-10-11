@@ -91,7 +91,7 @@ export class MagazineService {
     return { message: '매거진 삭제에 성공했습니다.' };
   }
 
-  async setLike(magazineId: number, userId: number) {
+  async setLike(magazineId: number, userId: number): Promise<object> {
     //* 0. 매거진 존재 여부 확인
     const isExist: Object = await this.findOne(magazineId);
     if (!isExist['data']) {
@@ -130,5 +130,52 @@ export class MagazineService {
     });
 
     return { message: '매거진 좋아요 취소에 성공했습니다.' };
+  }
+
+  async getLikes(userId: number) {
+    const LikeMagazines: Object | null =
+      await this.prisma.likeMagazine.findMany({
+        where: {
+          UserId: userId,
+        },
+        orderBy: {
+          createdAt: 'desc', //* '좋아요' 누른 시간대의 최신순으로 정렬
+        },
+        select: {
+          Magazine: {
+            select: {
+              magazineId: true,
+              title: true,
+              content: true,
+              mainImage: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+
+    const parseLikeMagazinesModel = (Magazines) => {
+      return Magazines.map((Magazine) => {
+        let obj = {};
+
+        // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+        Object.entries(Magazine).forEach(([key, value]) => {
+          if (typeof value === 'object' && !(value instanceof Date)) {
+            // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+            Object.entries(value).forEach(([subKey, subValue]) => {
+              obj[subKey] = subValue;
+            });
+          } else {
+            obj[key] = value;
+          }
+        });
+        return obj;
+      });
+    };
+
+    const parseLikeMagazines = parseLikeMagazinesModel(LikeMagazines);
+
+    return { data: parseLikeMagazines };
   }
 }
