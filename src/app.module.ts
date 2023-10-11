@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MagazineModule } from './magazine/magazine.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
     MagazineModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
