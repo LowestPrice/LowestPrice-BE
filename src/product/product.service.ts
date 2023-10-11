@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient, Product } from '@prisma/client';
+import { Product } from '@prisma/client';
+import { ProductRepository } from './product.repository';
 
 @Injectable()
 export class ProductService {
-    private prisma = new PrismaClient();
+    constructor(private readonly productRepository: ProductRepository) {}
 
     async getAllProducts() {
-        const products = await this.prisma.product.findMany(); // 예를 들어 Prisma를 사용한다고 가정
+        const products = await this.productRepository.getAllProducts(); 
 
         return products.map(product => ({
             ...product,
@@ -15,11 +16,7 @@ export class ProductService {
         }));
     }
 
-    async getProductDetail(id: number): Promise<Product> {
-        return this.prisma.product.findUnique({
-            where: {
-                productId: id,
-            }
-        });
+    async getProductDetail(productId: number): Promise<Product> {
+        return this.productRepository.getProductDetail(productId);
     }
 }

@@ -12,9 +12,9 @@ export class ProductController {
     }
 
     // 상품 상세 조회
-    @Get('/:id')
-    getProductDetail(@Param('id') id: number) {
-        return this.productService.getProductDetail(id);
+    @Get('/:productId')
+    getProductDetail(@Param('productId') productId: number) {
+        return this.productService.getProductDetail(+productId);
     }
 
 }
