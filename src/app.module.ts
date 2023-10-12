@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MagazineModule } from './magazine/magazine.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ProductModule } from './product/product.module';
 import { NotificationModule } from './notification/notification.module';
 
 @Module({
@@ -12,6 +13,7 @@ import { NotificationModule } from './notification/notification.module';
       isGlobal: true,
     }),
     PrismaModule,
+    ProductModule,
     MagazineModule,
     NotificationModule,
   ],
