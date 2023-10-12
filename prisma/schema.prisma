@@ -29,7 +29,7 @@ model User {
 
 model Category {
   categoryId Int    @id @default(autoincrement()) @map("id")
-  name       String @unique
+  categoryName       String @unique
 
   ProductCategory ProductCategory[]
 }
@@ -87,7 +87,7 @@ model Product {
   discountRate       Int?
   cardDiscount       Int?
   productUrl         String
-  productPartnersUrl String
+  productPartnersUrl String?
   isOutOfStock       Boolean
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
