@@ -6,10 +6,10 @@ export class ProductEntity {
     productId: number;
 
     @IsNotEmpty()
-    coupangItemId: number;
+    coupangItemId: string;
 
     @IsNotEmpty()
-    coupangVendorId: number;
+    coupangVendorId: string;
 
     @IsString()
     @IsNotEmpty()

@@ -1,9 +1,10 @@
-import { Controller, Get, Param, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductService } from './product.service';
+import { GetOneProductDto } from './dto/get.detail.product.dto';
 
 @Controller('product')
-// // Todo 유효성 검사 파이프 적용, DTO에 정의된 규칙에 맞는지 검사
-// @UsePipes(new ValidationPipe())  
+// Todo 유효성 검사 파이프 적용, DTO에 정의된 규칙에 맞는지 검사
+@UsePipes(new ValidationPipe())  
 export class ProductController {
     constructor(private productService: ProductService) {}
 
@@ -15,7 +16,9 @@ export class ProductController {
 
     //* 상품 상세 조회
     @Get('/:productId')
-    getProductDetail(@Param('productId') productId: number) {
-        return this.productService.getProductDetail(+productId);
+    async getProductDetail(@Param('productId', ParseIntPipe) productId: number) {
+        const result: GetOneProductDto = await this.productService.getProductDetail(productId);
+    
+        return result;
     }
 }
