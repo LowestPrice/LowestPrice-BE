@@ -1,13 +1,20 @@
-name: Build and Deploy to EC2(main)
+name: Build and Deploy to EC2
 
 on:
   workflow_dispatch:
+
+# workflow 환경 변수 설정
+env:
+  PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+  BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+  CODE_DEPLOY_APP_NAME: ${{ secrets.CODE_DEPLOY_APP_NAME }}
+  DEPLOYMENT_GROUP_NAME: ${{ secrets.DEPLOYMENT_GROUP_NAME }}
 
 jobs:
   setting:
     runs-on: ubuntu-latest
     steps:
-     # 해당 branch의 최신 commit에 checkout
+      # 해당 branch의 최신 commit에 checkout
       - name: checkout commit
         uses: actions/checkout@v3
 
@@ -17,11 +24,54 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-      
+
       # 의존성 설치
       - name: install dependency
         run: npm install
 
+      # 의미 없어서 삭제해도 됨
       # 테스트 실행
       - name: start test
         run: npm test
+
+  # delivery
+  delivery:
+    # test 작업이 성공했을 때만 실행
+    needs: test
+
+    runs-on: ubuntu-latest
+    steps:
+      # 해당 branch의 최신 commit에 checkout
+      - name: checkout commit
+        uses: actions/checkout@v3
+
+      # .env 파일 생성
+      - name: create env file
+        working-directory: ./
+        run: |
+          echo PORT=${{ secrets.PORT }} > .env
+          echo MONGODB_URI=${{ secrets.DATABASE_URL }} >> .env
+
+      # S3로 업로드 할 프로젝트 압축 파일 생성
+      - name: make .zip file
+        run: zip -qq -r ./$GITHUB_SHA.zip .
+
+      # AWS 서비스에 접근하기 위한 권한을 부여 받기
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PRIVATE_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # S3로 프로젝트 압축 파일 업로드
+      - name: upload .zip file to S3
+        run: aws s3 cp ./$GITHUB_SHA.zip s3://$BUCKET_NAME/$PROJECT_NAME/$GITHUB_SHA.zip
+
+      # codedeploy에게 배포를 요청
+      - name: request deploy to codedeploy
+        run: aws deploy create-deployment
+          --application-name $CODE_DEPLOY_APP_NAME
+          --deployment-config-name CodeDeployDefault.AllAtOnce
+          --deployment-group-name $DEPLOYMENT_GROUP_NAME
+          --s3-location bucket=$BUCKET_NAME,bundleType=zip,key=$PROJECT_NAME/$GITHUB_SHA.zip
