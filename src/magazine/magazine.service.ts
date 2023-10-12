@@ -34,9 +34,18 @@ export class MagazineService {
         mainImage: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
       },
     });
-    return { data: magazines };
+
+    const parseLikeMagazines: object[] =
+      this.parseLikeMagazinesModel(magazines);
+
+    return { data: parseLikeMagazines };
   }
 
   async findOne(id: number): Promise<object> {
@@ -51,9 +60,16 @@ export class MagazineService {
         mainImage: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
       },
     });
-    return { data: magazine };
+
+    const parseLikeMagazine: object = this.parseLikeMagazineModel(magazine);
+    return { data: parseLikeMagazine };
   }
 
   async update(id: number, data: Prisma.MagazineUpdateInput): Promise<object> {
@@ -133,7 +149,7 @@ export class MagazineService {
   }
 
   async getLikes(userId: number): Promise<object> {
-    const LikeMagazines: Object | null =
+    const LikeMagazines: Object[] | null =
       await this.prisma.likeMagazine.findMany({
         where: {
           UserId: userId,
@@ -150,32 +166,69 @@ export class MagazineService {
               mainImage: true,
               createdAt: true,
               updatedAt: true,
+              _count: {
+                select: {
+                  LikeMagazine: true,
+                },
+              },
             },
           },
         },
       });
 
-    const parseLikeMagazinesModel = (Magazines) => {
-      return Magazines.map((Magazine) => {
-        let obj = {};
-
-        // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
-        Object.entries(Magazine).forEach(([key, value]) => {
-          if (typeof value === 'object' && !(value instanceof Date)) {
-            // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
-            Object.entries(value).forEach(([subKey, subValue]) => {
-              obj[subKey] = subValue;
-            });
-          } else {
-            obj[key] = value;
-          }
-        });
-        return obj;
-      });
-    };
-
-    const parseLikeMagazines = parseLikeMagazinesModel(LikeMagazines);
+    const parseLikeMagazines: object[] =
+      this.parseLikeMagazinesModel(LikeMagazines);
 
     return { data: parseLikeMagazines };
+  }
+
+  parseLikeMagazinesModel(Magazines: object[]) {
+    return Magazines.map((Magazine) => {
+      let obj = {};
+
+      // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+      Object.entries(Magazine).forEach(([key, value]) => {
+        if (typeof value === 'object' && !(value instanceof Date)) {
+          // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+          Object.entries(value).forEach(([subKey, subValue]) => {
+            if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+              // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+              Object.entries(subValue).forEach(([subKey1, subValue1]) => {
+                obj[subKey1] = subValue1;
+              });
+            } else {
+              obj[subKey] = subValue;
+            }
+          });
+        } else {
+          obj[key] = value;
+        }
+      });
+      return obj;
+    });
+  }
+
+  parseLikeMagazineModel(Magazine: object) {
+    let obj = {};
+
+    // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+    Object.entries(Magazine).forEach(([key, value]) => {
+      if (typeof value === 'object' && !(value instanceof Date)) {
+        // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+            // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+            Object.entries(subValue).forEach(([subKey1, subValue1]) => {
+              obj[subKey1] = subValue1;
+            });
+          } else {
+            obj[subKey] = subValue;
+          }
+        });
+      } else {
+        obj[key] = value;
+      }
+    });
+    return obj;
   }
 }
