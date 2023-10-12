@@ -9,7 +9,7 @@ cd $REPOSITORY
 if [ -f $BACKEND_ENV_PATH ]; then
     source $BACKEND_ENV_PATH
 else
-    echo "> .env.production 파일이 존재하지 않습니다."
+    echo "> .env 파일이 존재하지 않습니다."
 fi
 
 # 의존성 설치

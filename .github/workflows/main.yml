@@ -50,7 +50,7 @@ jobs:
         working-directory: ./
         run: |
           echo PORT=${{ secrets.PORT }} > .env
-          echo MONGODB_URI=${{ secrets.DATABASE_URL }} >> .env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
 
       # S3로 업로드 할 프로젝트 압축 파일 생성
       - name: make .zip file
