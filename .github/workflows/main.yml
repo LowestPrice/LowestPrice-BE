@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-
+          
       # 의존성 설치
       - name: install dependency
         run: npm install
