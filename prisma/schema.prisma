@@ -84,11 +84,13 @@ model Product {
   productImage       String
   originalPrice      Int
   currentPrice       Int
+  discountRate       Int?
+  cardDiscount       Int?
   productUrl         String
   productPartnersUrl String
   isOutOfStock       Boolean
   createdAt          DateTime  @default(now())
-  updaedAt           DateTime  @updatedAt
+  updatedAt          DateTime  @updatedAt
   deletedAt          DateTime?
 
   PriceHistory    PriceHistory[]
@@ -100,8 +102,6 @@ model PriceHistory {
   priceHistoryId Int      @id @default(autoincrement())
   ProductId      Int
   price          Int
-  discountRate   Int?
-  cardDiscount   Int?
   createdAt      DateTime @default(now())
 
   Product Product @relation(fields: [ProductId], references: [productId], onDelete: Cascade)
