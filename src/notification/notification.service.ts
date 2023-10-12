@@ -86,8 +86,36 @@ export class NotificationService {
       },
     });
 
-    //! BigInt json으로 넘길 때, string으로 타입 변환 필요
-    //! res 형식 알맞게 설정 필요
-    return { data: products };
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
+  }
+
+  //* 객체 한줄로 펴주기(배열)
+  parseProductsModel(products: object[]): object {
+    return products.map((product) => {
+      let obj = {};
+
+      // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+      Object.entries(product).forEach(([key, value]) => {
+        if (typeof value === 'object' && !(value instanceof Date)) {
+          // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+          Object.entries(value).forEach(([subKey, subValue]) => {
+            if (typeof subValue === 'bigint') {
+              // type bigint -> string으로 변환
+              obj[subKey] = subValue.toString();
+            } else if (Array.isArray(subValue)) {
+              // Category 끄집어내기
+              obj['Category'] = subValue.map((item) => item.Category);
+            } else {
+              obj[subKey] = subValue;
+            }
+          });
+        } else {
+          obj[key] = value;
+        }
+      });
+      return obj;
+    });
   }
 }
