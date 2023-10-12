@@ -37,7 +37,7 @@ jobs:
   # delivery
   delivery:
     # test 작업이 성공했을 때만 실행
-    needs: test
+    needs: setting
 
     runs-on: ubuntu-latest
     steps:
