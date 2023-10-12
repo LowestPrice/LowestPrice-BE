@@ -31,6 +31,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
   app.enableShutdownHooks();
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PORT, () => {
+    console.log(`NestJS application is running on port ${process.env.PORT}`);
+  });
 }
 bootstrap();
