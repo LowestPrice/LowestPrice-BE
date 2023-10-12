@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaClient, Product } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 
 @Injectable()
 export class ProductRepository {
     constructor(private readonly prisma: PrismaClient) {}
 
-    // 상품 전체 조회 
+    //* 상품 전체 조회 
     async getAllProducts() {
-        const product = await this.prisma.product.findMany({
+        const products = await this.prisma.product.findMany({
             select: {
                 productId: true,
                 coupangItemId: true,
@@ -18,7 +18,8 @@ export class ProductRepository {
                 isOutOfStock: true,
                 originalPrice: true,
                 currentPrice: true,
-            
+                discountRate: true,
+                cardDiscount: true,
                 ProductCategory: {
                     select: {
                         Category: {
@@ -31,12 +32,40 @@ export class ProductRepository {
                 },
             },
         });
-        return product;
+        return products;
     }
 
-    async getProductDetail(productId: number): Promise <Product> {
-        return this.prisma.product.findUnique({
-            where: { productId}
+    //* 상품 상세 조회
+    async getProductDetail(productId: number){
+        const product = await this.prisma.product.findUnique({
+            where: { productId }, 
+            select: {
+                productId: true,
+                coupangItemId: true,
+                coupangVendorId: true,
+                productName: true,
+                productImage: true,
+                isOutOfStock: true,
+                originalPrice: true,
+                currentPrice: true,
+                discountRate: true,
+                cardDiscount: true,
+                productUrl: true,
+                productPartnersUrl: true,
+                ProductCategory: {
+                    select: {
+                        Category: {
+                            select: {
+                                categoryId: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+
+            }
         });
+
+        return product;
     } 
 }

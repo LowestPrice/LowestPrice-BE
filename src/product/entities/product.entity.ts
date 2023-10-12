@@ -1,15 +1,15 @@
-import { IsDate, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsDate, IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class ProductEntity {
-    @IsNumber()
+    @IsInt()
     @IsNotEmpty()
     productId: number;
 
     @IsNotEmpty()
-    coupangItemId: number;
+    coupangItemId: string;
 
     @IsNotEmpty()
-    coupangVendorId: number;
+    coupangVendorId: string;
 
     @IsString()
     @IsNotEmpty()
@@ -19,13 +19,21 @@ export class ProductEntity {
     @IsNotEmpty()
     productImage: string;
 
-    @IsNumber()
+    @IsInt()
     @IsNotEmpty()
     originalPrice: number;
 
-    @IsNumber()
+    @IsInt()
     @IsNotEmpty()
     currentPrice: number;
+
+    @IsOptional()
+    @IsInt()
+    discountRate?: number;
+
+    @IsOptional()
+    @IsInt()
+    cardDiscount?: number;
 
     @IsString()
     @IsNotEmpty()
@@ -46,6 +54,7 @@ export class ProductEntity {
     @IsNotEmpty()
     updatedAt: Date;
 
+    @IsOptional()
     @IsDate()
-    deletedAt: Date | null;
+    deletedAt?: Date | null;
 }
