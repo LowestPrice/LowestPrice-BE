@@ -182,6 +182,7 @@ export class MagazineService {
     return { data: parseLikeMagazines };
   }
 
+  //* 객체 한줄로 펴주기(배열)
   parseLikeMagazinesModel(Magazines: object[]) {
     return Magazines.map((Magazine) => {
       let obj = {};
@@ -208,6 +209,7 @@ export class MagazineService {
     });
   }
 
+  //* 객체 한줄로 펴주기(객체)
   parseLikeMagazineModel(Magazine: object) {
     let obj = {};
 
