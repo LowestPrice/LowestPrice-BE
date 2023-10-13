@@ -83,7 +83,7 @@ model Product {
   productName        String
   productImage       String
   originalPrice      Int
-  currentPrice       Int
+  currentPrice       Int?
   discountRate       Int?
   cardDiscount       Int?
   productUrl         String
