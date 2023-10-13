@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-          
+
       # 의존성 설치
       - name: install dependency
         run: npm install
@@ -51,6 +51,8 @@ jobs:
         run: |
           echo PORT=${{ secrets.PORT }} > .env
           echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> .env
+          echo COUPANG_ACCESS_KEY=${{ secrets.COUPANG_ACCESS_KEY }} >> .env
+          echo COUPANG_SECRET_KEY=${{ secrets.COUPANG_SECRET_KEY }} >> .env
 
       # S3로 업로드 할 프로젝트 압축 파일 생성
       - name: make .zip file
