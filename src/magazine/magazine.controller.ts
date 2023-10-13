@@ -6,10 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipeBuilder,
 } from '@nestjs/common';
 import { MagazineService } from './magazine.service';
 import { CreateMagazineDto } from './dto/create.magazine.dto';
 import { UpdateMagazineDto } from './dto/update.magazine.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('magazines')
 export class MagazineController {
@@ -18,7 +22,17 @@ export class MagazineController {
   //* 매거진 등록
   // 로그인 사용자 필요
   @Post()
-  create(@Body() createMagazineDto: CreateMagazineDto) {
+  @UseInterceptors(FileInterceptor('file'))
+  create(
+    @UploadedFile(
+      new ParseFilePipeBuilder().build({
+        fileIsRequired: true,
+      })
+    )
+    file: Express.Multer.File,
+    @Body() createMagazineDto: CreateMagazineDto
+  ) {
+    console.log(file);
     return this.magazineService.create(createMagazineDto);
   }
 
