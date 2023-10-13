@@ -76,7 +76,7 @@ export class NotificationService {
                 Category: {
                   select: {
                     categoryId: true,
-                    name: true,
+                    categoryName: true,
                   },
                 },
               },
