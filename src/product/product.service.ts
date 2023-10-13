@@ -3,11 +3,11 @@ import { ProductRepository } from './product.repository';
 
 @Injectable()
 export class ProductService {
-    constructor(private readonly productRepository: ProductRepository) {}
+  constructor(private readonly productRepository: ProductRepository) {}
 
-    //* 상품 전체 조회
-    async getAllProducts() {
-        const products = await this.productRepository.getAllProducts(); 
+  //* 상품 전체 조회
+  async getAllProducts() {
+    const products = await this.productRepository.getAllProducts();
 
         return products.map(product => ({
             ...product,
@@ -38,14 +38,13 @@ export class ProductService {
         }));
     }
 
-    
-    //* 상품 상세 조회
-    async getProductDetail(productId: number){
-        const product = await this.productRepository.getProductDetail(productId);
+  //* 상품 상세 조회
+  async getProductDetail(productId: number) {
+    const product = await this.productRepository.getProductDetail(productId);
 
-        if(!product) {
-            throw new HttpException('선택한 페이지를 찾을 수 없습니다.',404);
-        }
+    if (!product) {
+      throw new HttpException('선택한 페이지를 찾을 수 없습니다.', 404);
+    }
 
         const productDetail = {
             productId: product.productId,

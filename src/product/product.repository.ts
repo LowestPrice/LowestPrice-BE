@@ -4,7 +4,7 @@ import { PrismaClient, Product } from "@prisma/client";
 
 @Injectable()
 export class ProductRepository {
-    constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) {}
 
     //* 상품 전체 조회 
     async getAllProducts() {
@@ -154,6 +154,6 @@ export class ProductRepository {
             }
         });
 
-        return product;
-    } 
+    return product;
+  }
 }
