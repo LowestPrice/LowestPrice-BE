@@ -39,12 +39,24 @@ export class ProductRepository {
     async getTop10Products() {
         const products = await this.prisma.product.findMany({
             where: {
-                discountRate: {
-                    not: null,
-                },
+                AND: [
+                    {
+                        NOT: {
+                            discountRate: 0, // 할인이 없는 상품은 제외
+                        },
+                    },
+                    {
+                        NOT: {
+                            discountRate: null, // null 값인 상품은 제외
+                        },
+                    },
+                    {
+                        isOutOfStock: false, // 품절이 아닌 상품만 조회
+                    },
+                ]
             },
             orderBy: {
-                discountRate: 'desc',
+                discountRate: 'desc', 
             },
             take: 10,
             select: {
