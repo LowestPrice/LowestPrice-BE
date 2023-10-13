@@ -27,8 +27,14 @@ export class ProductController {
     return this.productService.getTop10Products();
   }
 
+  //* 상품 카테고리별 조회
+    @Get('category/:categoryName')
+    async getProductsByCategory(@Param('categoryName') categoryName: string): Promise<object> {
+        return this.productService.getProductsByCategory(categoryName);
+    }
+
   //* 상품 상세 조회
-  @Get(':productId') //
+  @Get(':productId') 
   async getProductDetail(@Param('productId', ParseIntPipe) productId: number) {
     const result: GetOneProductDto =
       await this.productService.getProductDetail(productId);

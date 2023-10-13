@@ -85,6 +85,44 @@ export class ProductRepository {
         return products;
     }
 
+    //* 상품 카테고리별 조회
+    async getProductsByCategory(categoryName: string) {
+        const products = await this.prisma.product.findMany({
+            where: {
+                ProductCategory: {
+                    some: {
+                        Category: {
+                            categoryName,
+                        },
+                    },
+                },
+            },
+            select: {
+                productId: true,
+                coupangItemId: true,
+                coupangVendorId: true,
+                productName: true,
+                productImage: true,
+                isOutOfStock: true,
+                originalPrice: true,
+                currentPrice: true,
+                discountRate: true,
+                cardDiscount: true,
+                ProductCategory: {
+                    select: {
+                        Category: {
+                            select: {
+                                categoryId: true,
+                                categoryName: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        return products;
+    }
+
     //* 상품 상세 조회
     async getProductDetail(productId: number){
         const product = await this.prisma.product.findUnique({
