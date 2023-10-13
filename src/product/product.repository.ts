@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Product } from "@prisma/client";
 
 
 @Injectable()
@@ -25,7 +25,45 @@ export class ProductRepository {
                         Category: {
                             select: {
                                 categoryId: true,
-                                name: true,
+                                categoryName: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        return products;
+    }
+
+    //* 상품 상위10개 조회
+    async getTop10Products() {
+        const products = await this.prisma.product.findMany({
+            where: {
+                discountRate: {
+                    not: null,
+                },
+            },
+            orderBy: {
+                discountRate: 'desc',
+            },
+            take: 10,
+            select: {
+                productId: true,
+                coupangItemId: true,
+                coupangVendorId: true,
+                productName: true,
+                productImage: true,
+                isOutOfStock: true,
+                originalPrice: true,
+                currentPrice: true,
+                discountRate: true,
+                cardDiscount: true,
+                ProductCategory: {
+                    select: {
+                        Category: {
+                            select: {
+                                categoryId: true,
+                                categoryName: true,
                             },
                         },
                     },
@@ -57,7 +95,7 @@ export class ProductRepository {
                         Category: {
                             select: {
                                 categoryId: true,
-                                name: true,
+                                categoryName: true,
                             },
                         },
                     },
