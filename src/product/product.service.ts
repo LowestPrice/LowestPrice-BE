@@ -33,6 +33,20 @@ export class ProductService {
     return { data: parseProducts };
   }
 
+  //* 상품 카테고리별 필터기능 조회
+  async getProductsByCategoryAndFilter(categoryName: string, filter: string) {
+    console.log(`categoryName: ${categoryName}, filter:${filter}`);
+    const products =
+      await this.productRepository.getProductsByCategoryAndFilter(
+        categoryName,
+        filter
+      );
+
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
+  }
+
   //* 상품 상세 조회
   async getProductDetail(productId: number) {
     const product = await this.productRepository.getProductDetail(productId);

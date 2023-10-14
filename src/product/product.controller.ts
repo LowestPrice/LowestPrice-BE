@@ -36,6 +36,18 @@ export class ProductController {
     return this.productService.getProductsByCategory(categoryName);
   }
 
+  //* 상품 카테고리별 필터기능 조회
+  @Get('category/:categoryName/:filter')
+  async getProductsByCategoryAndFilter(
+    @Param('categoryName') categoryName: string,
+    @Param('filter') filter: string
+  ): Promise<object> {
+    return this.productService.getProductsByCategoryAndFilter(
+      categoryName,
+      filter
+    );
+  }
+
   //* 상품 상세 조회
   @Get(':productId')
   async getProductDetail(@Param('productId', ParseIntPipe) productId: number) {
