@@ -68,9 +68,8 @@ export class ProductService {
     return productDetail;
   }
 
-
-//* 객체 한줄로 펴주기(배열)
-parseProductsModel(products: object[]): object {
+  //* 객체 한줄로 펴주기(배열)
+  parseProductsModel(products: object[]): object {
     return products.map((product) => {
       let obj = {};
       // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
