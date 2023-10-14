@@ -71,6 +71,8 @@ export class ProductRepository {
         currentPrice: true,
         discountRate: true,
         cardDiscount: true,
+        createdAt: true,
+        updatedAt: true,
         ProductCategory: {
           select: {
             Category: {
@@ -109,6 +111,8 @@ export class ProductRepository {
         currentPrice: true,
         discountRate: true,
         cardDiscount: true,
+        createdAt: true,
+        updatedAt: true,
         ProductCategory: {
           select: {
             Category: {
@@ -141,6 +145,8 @@ export class ProductRepository {
         cardDiscount: true,
         productUrl: true,
         productPartnersUrl: true,
+        createdAt: true,
+        updatedAt: true,
         ProductCategory: {
           select: {
             Category: {

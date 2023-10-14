@@ -18,11 +18,9 @@ export class ProductService {
   async getTop10Products() {
     const products = await this.productRepository.getTop10Products();
 
-    return products.map((product) => ({
-      ...product,
-      coupangItemId: product.coupangItemId.toString(), // BigInt를 문자열로 변환
-      coupangVendorId: product.coupangVendorId.toString(), // BigInt를 문자열로 변환
-    }));
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
   }
 
   //* 상품 카테고리별 조회
@@ -30,11 +28,9 @@ export class ProductService {
     const products =
       await this.productRepository.getProductsByCategory(categoryName);
 
-    return products.map((product) => ({
-      ...product,
-      coupangItemId: product.coupangItemId.toString(), // BigInt를 문자열로 변환
-      coupangVendorId: product.coupangVendorId.toString(), // BigInt를 문자열로 변환
-    }));
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
   }
 
   //* 상품 상세 조회
@@ -58,6 +54,8 @@ export class ProductService {
       cardDiscount: product.cardDiscount,
       productUrl: product.productUrl,
       productPartnersUrl: product.productPartnersUrl,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
       categoryId: product.ProductCategory.map(
         (category) => category.Category.categoryId
       ),
