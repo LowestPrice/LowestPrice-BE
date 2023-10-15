@@ -11,6 +11,12 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
+  @Get('/kakao')
+  @UseGuards(AuthGuard('kakao'))
+  kakaoLogin(): any {
+    // do nothing
+  }
+
   @UseGuards(AuthGuard('kakao'))
   @Get('/kakao-callback')
   async kakaoCallback(
