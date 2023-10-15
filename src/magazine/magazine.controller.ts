@@ -3,12 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseInterceptors,
   UploadedFile,
-  ParseFilePipeBuilder,
+  Put,
 } from '@nestjs/common';
 import { MagazineService } from './magazine.service';
 import { CreateMagazineDto } from './dto/create.magazine.dto';
@@ -24,16 +23,15 @@ export class MagazineController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   create(
-    @UploadedFile(
-      new ParseFilePipeBuilder().build({
-        fileIsRequired: true,
-      })
-    )
-    file: Express.Multer.File,
+    @UploadedFile()
+    file // new ParseFilePipeBuilder().build({
+    //   fileIsRequired: true,
+    // })
+    : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
     console.log(file);
-    return this.magazineService.create(createMagazineDto);
+    return this.magazineService.create(file, createMagazineDto);
   }
 
   //* 매거진 조회
@@ -57,7 +55,7 @@ export class MagazineController {
   }
 
   //* 매거진 수정
-  @Patch('/:magazineId')
+  @Put('/:magazineId')
   update(
     @Param('magazineId') magazineId: number,
     @Body() updateMagazineDto: UpdateMagazineDto
