@@ -10,6 +10,7 @@ import { PartnersModule } from './partners/partners.module';
 import { ScheduleModule } from '@nestjs/schedule'; // 추가
 import { ScrappingModule } from './scrapping/scrapping.module';
 import { PriceHistoryModule } from './price-history/price-history.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PriceHistoryModule } from './price-history/price-history.module';
     PartnersModule,
     NotificationModule,
     PriceHistoryModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
