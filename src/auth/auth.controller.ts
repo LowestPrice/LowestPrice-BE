@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { KakaoUser, KakaoUserAfterAuth } from './util/decorator/user.decorator';
 
-@Controller('auth')
+@Controller('')
 export class AuthController {
   constructor(
     private readonly jwtService: JwtService,
@@ -17,6 +17,7 @@ export class AuthController {
     // do nothing
   }
 
+  //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
   @Get('/kakao-callback')
   async kakaoCallback(

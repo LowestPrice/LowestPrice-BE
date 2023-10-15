@@ -8,22 +8,29 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     super({
       clientID: process.env.KAKAO_CLIENT_ID,
       clientSecret: process.env.KAKAO_CLIENT_SECRET,
-      callbackURL: process.env.KAKAO_CALLBACK_URL,
+      callbackURL: process.env.KAKAO_CALLBACK_URL, //리다이렉트 url
       scope: ['account_email', 'profile_nickname'],
     });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: Profile) {
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: Profile,
+    done: Function
+  ) {
     // 카카오에서 제공하는 토근 & 사용자 정보
     console.log('accessToken: ', accessToken);
     console.log('refreshToken: ', refreshToken);
     console.log(profile);
 
-    return {
+    const user = {
       email: profile._json.kakao_account.email,
       snsId: String(profile.id),
       nickname: profile.displayName,
       provider: profile.provider,
     };
+
+    done(null, user);
   }
 }
