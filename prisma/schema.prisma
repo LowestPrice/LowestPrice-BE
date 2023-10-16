@@ -28,8 +28,8 @@ model User {
 }
 
 model Category {
-  categoryId Int    @id @default(autoincrement()) @map("id")
-  categoryName       String @unique
+  categoryId   Int    @id @default(autoincrement()) @map("id")
+  categoryName String @unique
 
   ProductCategory ProductCategory[]
 }
@@ -78,6 +78,7 @@ model LikeMagazine {
 
 model Product {
   productId          Int       @id @default(autoincrement())
+  realId             BigInt?    
   coupangItemId      BigInt
   coupangVendorId    BigInt    @unique
   productName        String
