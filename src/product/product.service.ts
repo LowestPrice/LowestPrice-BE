@@ -16,6 +16,29 @@ export class ProductService {
     }));
   }
 
+  //* 상품 상위10개 조회
+  async getTop10Products() {
+    const products = await this.productRepository.getTop10Products();
+
+    return products.map((product) => ({
+      ...product,
+      coupangItemId: product.coupangItemId.toString(), // BigInt를 문자열로 변환
+      coupangVendorId: product.coupangVendorId.toString(), // BigInt를 문자열로 변환
+    }));
+  }
+
+  //* 상품 카테고리별 조회
+  async getProductsByCategory(categoryName: string) {
+    const products =
+      await this.productRepository.getProductsByCategory(categoryName);
+
+    return products.map((product) => ({
+      ...product,
+      coupangItemId: product.coupangItemId.toString(), // BigInt를 문자열로 변환
+      coupangVendorId: product.coupangVendorId.toString(), // BigInt를 문자열로 변환
+    }));
+  }
+
   //* 상품 상세 조회
   async getProductDetail(productId: number) {
     const product = await this.productRepository.getProductDetail(productId);

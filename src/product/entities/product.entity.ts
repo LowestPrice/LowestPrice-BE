@@ -23,9 +23,9 @@ export class ProductEntity {
     @IsNotEmpty()
     originalPrice: number;
 
+    @IsOptional()
     @IsInt()
-    @IsNotEmpty()
-    currentPrice: number;
+    currentPrice?: number;
 
     @IsOptional()
     @IsInt()
@@ -39,9 +39,9 @@ export class ProductEntity {
     @IsNotEmpty()
     productUrl: string;
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    productPartnersUrl: string;
+    productPartnersUrl?: string;
 
     @IsNotEmpty()
     isOutOfStock: boolean;
