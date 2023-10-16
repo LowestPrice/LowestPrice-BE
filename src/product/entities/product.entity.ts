@@ -5,6 +5,9 @@ export class ProductEntity {
     @IsNotEmpty()
     productId: number;
 
+    // @IsNotEmpty()
+    // realId: string;
+
     @IsNotEmpty()
     coupangItemId: string;
 
