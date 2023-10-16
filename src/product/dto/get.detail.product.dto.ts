@@ -13,6 +13,7 @@ import { IsArray, IsString } from 'class-validator';
 
 export class GetOneProductDto extends PickType(ProductEntity, [
   'productId',
+  // 'realId',
   'coupangItemId',
   'coupangVendorId',
   'productName',

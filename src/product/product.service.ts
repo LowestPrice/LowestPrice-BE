@@ -57,6 +57,7 @@ export class ProductService {
 
     const productDetail = {
       productId: product.productId,
+      // realId: product.realId.toString(),
       coupangItemId: product.coupangItemId.toString(),
       coupangVendorId: product.coupangVendorId.toString(),
       productName: product.productName,

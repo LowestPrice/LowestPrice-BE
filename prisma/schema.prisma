@@ -78,6 +78,7 @@ model LikeMagazine {
 
 model Product {
   productId          Int       @id @default(autoincrement())
+  // realId             BigInt    @unique
   coupangItemId      BigInt
   coupangVendorId    BigInt    @unique
   productName        String
