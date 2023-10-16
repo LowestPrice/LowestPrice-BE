@@ -5,7 +5,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { ProductRepository } from './product.repository';
 import { PrismaClient } from '@prisma/client';
 
-
 @Module({
   imports: [PrismaModule],
   controllers: [ProductController],

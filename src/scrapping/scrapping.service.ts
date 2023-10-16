@@ -48,18 +48,24 @@ export class ScrappingService {
   async scrapePage2(url: string, category: string) {
     const browser = await puppeteer.launch({
       headless: true,
-      args: [`--window-size=1920,1020`],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--window-size=1920,1020',
+      ],
       defaultViewport: {
         width: 1920,
         height: 1020,
       },
     });
+
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 279813 });
 
     let prevHeight = 0;
     let scrollHeight = 0;
     const viewportHeight = 1020;
+    let firstScrapedCarouselId: string | null = null; // 첫번째로 스크래핑한 캐러셀의 ID를 저장
 
     // 전체 페이지를 스크롤하면서 캐러셀 정보 수집
     while (true) {
@@ -79,6 +85,19 @@ export class ScrappingService {
         const lazyContainerId = await lazyContainer.evaluate((el) =>
           el.getAttribute('data-id')
         );
+
+        // 첫번째로 스크래핑한 캐러셀과 같은 캐러셀을 다시 만나면 반복문을 탈출
+        if (
+          firstScrapedCarouselId &&
+          firstScrapedCarouselId === lazyContainerId
+        ) {
+          await browser.close(); // 브라우저 닫기 전에 탈출
+          return;
+        }
+
+        if (!firstScrapedCarouselId) {
+          firstScrapedCarouselId = lazyContainerId; // 첫번째로 스크래핑한 캐러셀의 ID 저장
+        }
 
         const carousels = await lazyContainer.$$('.carousel');
         console.log(
@@ -113,6 +132,7 @@ export class ScrappingService {
             } catch (error) {
               console.error('Error navigating to next page:', error);
             }
+
             await new Promise((r) => setTimeout(r, 3000));
 
             const specificLazyContainer = await page.$(
@@ -126,9 +146,11 @@ export class ScrappingService {
             $('.product-unit').each((_, element) => {
               const parentElement = $(element).parent();
               const product = this.extractProductInfo2($, parentElement.get(0));
+
               if (vendorItemSet.has(BigInt(product.coupangVendorId))) {
                 return;
               }
+
               vendorItemSet.add(BigInt(product.coupangVendorId));
               console.log(product);
 
@@ -140,10 +162,12 @@ export class ScrappingService {
                 });
             });
           }
+
           console.log(`Total products scraped: ${vendorItemSet.size}`);
         }
       }
     }
+
     await browser.close();
   }
   private extractProductInfo2(
@@ -237,7 +261,10 @@ export class ScrappingService {
   private async scrapePage(url: string, category: string) {
     try {
       this.logger.log(`스크래핑 시작: ${url}`);
-      const browser = await puppeteer.launch({ headless: true });
+      const browser = await puppeteer.launch({
+        headless: true, // 배포 환경에서는 보통 headless 모드를 사용합니다.
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
       const page = await browser.newPage();
       await page.goto(url, {
         waitUntil: 'domcontentloaded',
@@ -276,6 +303,7 @@ export class ScrappingService {
         for (const product of newProducts) {
           await new Promise((resolve) => setTimeout(resolve, 100));
           await this.scrappingRepository.saveProductInfo(product, category);
+          await console.log(product);
         }
 
         loopCount++; // 추가: 루프 횟수 증가
@@ -294,6 +322,13 @@ export class ScrappingService {
     // 1. 쿠팡의 고유 ID를 추출합니다.
     const href = $(element).find('a').attr('href');
     let CproductId: number | null = null;
+    let realId: bigint | null = null;
+    if (href) {
+      const realIdMatch = href.match(/products\/(\d+)\?/);
+      if (realIdMatch && realIdMatch[1]) {
+        realId = BigInt(realIdMatch[1]);
+      }
+    }
     if (href) {
       const urlParams = new URLSearchParams(href.split('?')[1]);
       CproductId = parseInt(urlParams.get('itemId') || '', 10);
@@ -365,6 +400,7 @@ export class ScrappingService {
 
     // 13. 모든 정보를 객체로 반환합니다.
     return {
+      realId,
       coupangItemId: CproductId, // 변경됨
       coupangVendorId: vendorItemId, // 변경됨
       productName: CproductName, // 변경됨

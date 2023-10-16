@@ -9,11 +9,42 @@ export class ProductService {
   async getAllProducts() {
     const products = await this.productRepository.getAllProducts();
 
-    return products.map((product) => ({
-      ...product,
-      coupangItemId: product.coupangItemId.toString(), // BigInt를 문자열로 변환
-      coupangVendorId: product.coupangVendorId.toString(), // BigInt를 문자열로 변환
-    }));
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
+  }
+
+  //* 상품 상위10개 조회
+  async getTop10Products() {
+    const products = await this.productRepository.getTop10Products();
+
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
+  }
+
+  //* 상품 카테고리별 조회
+  async getProductsByCategory(categoryName: string) {
+    const products =
+      await this.productRepository.getProductsByCategory(categoryName);
+
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
+  }
+
+  //* 상품 카테고리별 필터기능 조회
+  async getProductsByCategoryAndFilter(categoryName: string, filter: string) {
+    console.log(`categoryName: ${categoryName}, filter:${filter}`);
+    const products =
+      await this.productRepository.getProductsByCategoryAndFilter(
+        categoryName,
+        filter
+      );
+
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
   }
 
   //* 상품 상세 조회
@@ -26,6 +57,7 @@ export class ProductService {
 
     const productDetail = {
       productId: product.productId,
+      // realId: product.realId.toString(),
       coupangItemId: product.coupangItemId.toString(),
       coupangVendorId: product.coupangVendorId.toString(),
       productName: product.productName,
@@ -37,6 +69,8 @@ export class ProductService {
       cardDiscount: product.cardDiscount,
       productUrl: product.productUrl,
       productPartnersUrl: product.productPartnersUrl,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
       categoryId: product.ProductCategory.map(
         (category) => category.Category.categoryId
       ),
@@ -45,5 +79,30 @@ export class ProductService {
       ),
     };
     return productDetail;
+  }
+
+  //* 객체 한줄로 펴주기(배열)
+  parseProductsModel(products: object[]): object {
+    return products.map((product) => {
+      let obj = {};
+      // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+      Object.entries(product).forEach(([key, value]) => {
+        if (typeof value === 'object' && !(value instanceof Date)) {
+          // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+          if (Array.isArray(value)) {
+            // Category 끄집어내기
+            obj['Category'] = value.map((item) => item.Category);
+          }
+        } else {
+          if (typeof value === 'bigint') {
+            // type bigint -> string으로 변환
+            obj[key] = value.toString();
+          } else {
+            obj[key] = value;
+          }
+        }
+      });
+      return obj;
+    });
   }
 }

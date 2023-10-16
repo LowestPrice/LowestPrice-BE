@@ -5,6 +5,9 @@ export class ProductEntity {
     @IsNotEmpty()
     productId: number;
 
+    // @IsNotEmpty()
+    // realId: string;
+
     @IsNotEmpty()
     coupangItemId: string;
 
@@ -23,9 +26,9 @@ export class ProductEntity {
     @IsNotEmpty()
     originalPrice: number;
 
+    @IsOptional()
     @IsInt()
-    @IsNotEmpty()
-    currentPrice: number;
+    currentPrice?: number;
 
     @IsOptional()
     @IsInt()
@@ -39,9 +42,9 @@ export class ProductEntity {
     @IsNotEmpty()
     productUrl: string;
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    productPartnersUrl: string;
+    productPartnersUrl?: string;
 
     @IsNotEmpty()
     isOutOfStock: boolean;
