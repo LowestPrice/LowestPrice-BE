@@ -6,6 +6,14 @@ import { KakaoUserAfterAuth } from './util/decorator/user.decorator';
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findKakaoUser(user: KakaoUserAfterAuth) {
+    return await this.prisma.user.findUnique({
+      where: {
+        email: user.email,
+      },
+    });
+  }
+
   async createKakaoUser(user: KakaoUserAfterAuth) {
     return await this.prisma.user.create({
       data: {
