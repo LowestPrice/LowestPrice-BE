@@ -9,7 +9,7 @@ export class SearchRepository {
     const products = await this.prisma.product.findMany({
       where: {
         productName: {
-          contains: search, // search가 포함된 productName을 찾는다. %search%와 같음
+          contains: search, // 'search'가 포함된 productName을 찾는다. %search%와 같음
         },
       },
       select: {

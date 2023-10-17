@@ -7,7 +7,10 @@ export class SearchService {
 
   async searchProduct(search: string) {
     const products = await this.searchRepository.searchProduct(search);
-    return this.parseProductsModel(products);
+
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
   }
 
   private parseProductsModel(products: object[]): object {
