@@ -214,7 +214,7 @@ export class ProductRepository {
       where: { productId },
       select: {
         productId: true,
-        // realId: true,
+        realId: true,
         coupangItemId: true,
         coupangVendorId: true,
         productName: true,

@@ -16,8 +16,8 @@ export class GetProductDTO extends PickType(ProductEntity, [
   'createdAt',
   'updatedAt',
 ]) {
-    category: {
-        categoryId: number;
-        categoryName: string;
-    }
+  category: {
+    categoryId: number;
+    categoryName: string;
+  };
 }
