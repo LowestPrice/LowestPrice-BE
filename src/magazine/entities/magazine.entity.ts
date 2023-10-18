@@ -14,8 +14,7 @@ export class Magazine {
   content: string;
 
   //* multer 사용시 수정
-  @IsString()
-  mainImage: string | null;
+  mainImage: string;
 
   @IsDate()
   createdAt: string;

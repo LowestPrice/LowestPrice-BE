@@ -1,60 +1,69 @@
-import { IsDate, IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import {
+  IsDate,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class ProductEntity {
-    @IsInt()
-    @IsNotEmpty()
-    productId: number;
+  @IsInt()
+  @IsNotEmpty()
+  productId: number;
 
-    @IsNotEmpty()
-    coupangItemId: string;
+  @IsNotEmpty()
+  realId: string;
 
-    @IsNotEmpty()
-    coupangVendorId: string;
+  @IsNotEmpty()
+  coupangItemId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    productName: string;
+  @IsNotEmpty()
+  coupangVendorId: string;
 
-    @IsString()
-    @IsNotEmpty()
-    productImage: string;
+  @IsString()
+  @IsNotEmpty()
+  productName: string;
 
-    @IsInt()
-    @IsNotEmpty()
-    originalPrice: number;
+  @IsString()
+  @IsNotEmpty()
+  productImage: string;
 
-    @IsInt()
-    @IsNotEmpty()
-    currentPrice: number;
+  @IsInt()
+  @IsNotEmpty()
+  originalPrice: number;
 
-    @IsOptional()
-    @IsInt()
-    discountRate?: number;
+  @IsOptional()
+  @IsInt()
+  currentPrice?: number;
 
-    @IsOptional()
-    @IsInt()
-    cardDiscount?: number;
+  @IsOptional()
+  @IsInt()
+  discountRate?: number;
 
-    @IsString()
-    @IsNotEmpty()
-    productUrl: string;
+  @IsOptional()
+  @IsInt()
+  cardDiscount?: number;
 
-    @IsString()
-    @IsNotEmpty()
-    productPartnersUrl: string;
+  @IsString()
+  @IsNotEmpty()
+  productUrl: string;
 
-    @IsNotEmpty()
-    isOutOfStock: boolean;
+  @IsOptional()
+  @IsString()
+  productPartnersUrl?: string;
 
-    @IsDate()
-    @IsNotEmpty()
-    createdAt: Date;
+  @IsNotEmpty()
+  isOutOfStock: boolean;
 
-    @IsDate()
-    @IsNotEmpty()
-    updatedAt: Date;
+  @IsDate()
+  @IsNotEmpty()
+  createdAt: Date;
 
-    @IsOptional()
-    @IsDate()
-    deletedAt?: Date | null;
+  @IsDate()
+  @IsNotEmpty()
+  updatedAt: Date;
+
+  @IsOptional()
+  @IsDate()
+  deletedAt?: Date | null;
 }

@@ -1,14 +1,35 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { LikeMagazine, Magazine, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-
+import * as AWS from 'aws-sdk';
+import { extname, resolve } from 'path';
+import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
+import { Console } from 'console';
 @Injectable()
 export class MagazineService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly s3: AWS.S3;
+  constructor(private readonly prisma: PrismaService) {
+    AWS.config.update({
+      region: process.env.AWS_S3_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_S3_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_S3_SECRET_KEY,
+      },
+    });
+    this.s3 = new AWS.S3();
+  }
   // Todo: 매거진 상세조회, 수정, 삭제 시 매거진 존재하는지 확인하는 로직 추가
 
-  async create(data: Prisma.MagazineCreateInput): Promise<object> {
+  async create(
+    file: Express.Multer.File,
+    data: Prisma.MagazineCreateInput
+  ): Promise<object> {
     try {
+      if (file) {
+        const uploadObject = this.uploadFile(file);
+        data.mainImage = (await uploadObject).Location;
+      }
+
       const magazine: Magazine | null = await this.prisma.magazine.create({
         data,
       });
@@ -34,9 +55,18 @@ export class MagazineService {
         mainImage: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
       },
     });
-    return { data: magazines };
+
+    const parseLikeMagazines: object[] =
+      this.parseLikeMagazinesModel(magazines);
+
+    return { data: parseLikeMagazines };
   }
 
   async findOne(id: number): Promise<object> {
@@ -51,18 +81,34 @@ export class MagazineService {
         mainImage: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
       },
     });
-    return { data: magazine };
+
+    const parseLikeMagazine: object = this.parseLikeMagazineModel(magazine);
+    return { data: parseLikeMagazine };
   }
 
-  async update(id: number, data: Prisma.MagazineUpdateInput): Promise<object> {
+  async update(
+    id: number,
+    file: Express.Multer.File,
+    data: Prisma.MagazineUpdateInput
+  ): Promise<object> {
     const isExist: Object = await this.findOne(id);
     if (!isExist['data']) {
       throw new HttpException(
         '해당 매거진이 존재하지 않습니다.',
         HttpStatus.NOT_FOUND
       );
+    }
+
+    if (file) {
+      const uploadObject = this.uploadFile(file);
+      data.mainImage = (await uploadObject).Location;
     }
 
     const magazine: Magazine | null = await this.prisma.magazine.update({
@@ -89,6 +135,37 @@ export class MagazineService {
       },
     });
     return { message: '매거진 삭제에 성공했습니다.' };
+  }
+
+  //* 해당 매거진 제외한 나머지 매거진 리스트 조회
+  //! 해당 매거진 존재 여부 예외 처리 안함
+  async excludeOne(id: number): Promise<object> {
+    const magazines: Object[] | null = await this.prisma.magazine.findMany({
+      where: {
+        NOT: {
+          magazineId: id,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        magazineId: true,
+        title: true,
+        content: true,
+        mainImage: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
+      },
+    });
+
+    console.log(magazines);
+    return magazines;
   }
 
   async setLike(magazineId: number, userId: number): Promise<object> {
@@ -133,7 +210,7 @@ export class MagazineService {
   }
 
   async getLikes(userId: number): Promise<object> {
-    const LikeMagazines: Object | null =
+    const LikeMagazines: Object[] | null =
       await this.prisma.likeMagazine.findMany({
         where: {
           UserId: userId,
@@ -150,32 +227,113 @@ export class MagazineService {
               mainImage: true,
               createdAt: true,
               updatedAt: true,
+              _count: {
+                select: {
+                  LikeMagazine: true,
+                },
+              },
             },
           },
         },
       });
 
-    const parseLikeMagazinesModel = (Magazines) => {
-      return Magazines.map((Magazine) => {
-        let obj = {};
-
-        // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
-        Object.entries(Magazine).forEach(([key, value]) => {
-          if (typeof value === 'object' && !(value instanceof Date)) {
-            // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
-            Object.entries(value).forEach(([subKey, subValue]) => {
-              obj[subKey] = subValue;
-            });
-          } else {
-            obj[key] = value;
-          }
-        });
-        return obj;
-      });
-    };
-
-    const parseLikeMagazines = parseLikeMagazinesModel(LikeMagazines);
+    const parseLikeMagazines: object[] =
+      this.parseLikeMagazinesModel(LikeMagazines);
 
     return { data: parseLikeMagazines };
   }
+
+  //* 객체 한줄로 펴주기(배열)
+  parseLikeMagazinesModel(Magazines: object[]) {
+    return Magazines.map((Magazine) => {
+      let obj = {};
+
+      // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+      Object.entries(Magazine).forEach(([key, value]) => {
+        if (typeof value === 'object' && !(value instanceof Date)) {
+          // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+          Object.entries(value).forEach(([subKey, subValue]) => {
+            if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+              // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+              Object.entries(subValue).forEach(([subKey1, subValue1]) => {
+                obj[subKey1] = subValue1;
+              });
+            } else {
+              obj[subKey] = subValue;
+            }
+          });
+        } else {
+          obj[key] = value;
+        }
+      });
+      return obj;
+    });
+  }
+
+  //* 객체 한줄로 펴주기(객체)
+  parseLikeMagazineModel(Magazine: object) {
+    let obj = {};
+
+    // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+    Object.entries(Magazine).forEach(([key, value]) => {
+      if (typeof value === 'object' && !(value instanceof Date)) {
+        // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+            // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
+            Object.entries(subValue).forEach(([subKey1, subValue1]) => {
+              obj[subKey1] = subValue1;
+            });
+          } else {
+            obj[subKey] = subValue;
+          }
+        });
+      } else {
+        obj[key] = value;
+      }
+    });
+    return obj;
+  }
+
+  //! 파일 업로드 부분
+  async uploadFile(file: Express.Multer.File): Promise<ManagedUpload.SendData> {
+    console.log(`진입`);
+    const key = `${Date.now()}${extname(file.originalname)}`;
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      // ACL: 'public-read',
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
+
+    const uploadObject: ManagedUpload.SendData = await this.s3
+      .upload(params)
+      .promise();
+
+    //const fileUrl = uploadObject.Location;
+
+    return uploadObject;
+  }
 }
+
+// const magazines: Array<Object> = await this.prisma.magazine.findMany({
+//   where: {
+//     NOT: {
+//       magazineId: id,
+//     },
+//   },
+//   select: {
+//     magazineId: true,
+//     title: true,
+//     content: true,
+//     mainImage: true,
+//     createdAt: true,
+//     updatedAt: true,
+//     _count: {
+//       select: {
+//         LikeMagazine: true,
+//       },
+//     },
+//   },
+// });
