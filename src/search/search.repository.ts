@@ -12,6 +12,7 @@ export class SearchRepository {
     // 배열의 각 요소에 대해 productName에 검색어가 포함되었는지 검사하는 조건이 담긴 객체가 포함된 배열을 만듬
     const searchCondition = searchWords.map((word) => ({
       productName: {
+        // 부분 문자열 일치를 검색하기 위해 contains를 사용
         contains: word,
       },
     }));

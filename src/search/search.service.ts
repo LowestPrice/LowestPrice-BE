@@ -8,22 +8,39 @@ export class SearchService {
   //* 검색어 변환
   // 사람들이 자주 사용할 것 같은 단어를 productName에 포함된 단어로 변환
   transformSearch(search: string): string {
+    console.log(`original search: ${search}`);
     // 붙여쓰기를 띄어쓰기로 변환
     // '아이패드프로실버'와 같은 문자열을 '아이패드 프로 실버'로 변환
-    const pattern = /(아이폰|아이패드|에어팟|맥북)(프로|에어|미니)?(.*)?/;
-    search = search.replace(pattern, (match, p1, p2, p3) => {
-      let result = p1;
+    // 너무 많은 조건이 붙으면 성능이 떨어질 수 있으므로 최대한 간단하게 처리 (검색어 작성법 안내 필요 : 아이폰 버전 색상 순서로 작성해주세요)
+    const pattern =
+      /(.+?)?(아이폰|아이패드|에어팟|맥북|애플워치)(프로|에어|미니)?(.*)?/;
+    search = search.replace(pattern, (match, p0, p1, p2, p3) => {
+      let result = '';
+
+      // 제품명 앞에 오는 문자열 처리
+      if (p0) {
+        // p0 변수의 값을 앞뒤 공백을 제거한 후 추가한 다음에 띄어쓰기를 추가
+        result += `${p0.trim()} `;
+      }
+
+      // 제품카테고리 처리
+      result += p1;
+
+      // 제품별 옵션(프로, 에어, 미니 등) 처리
       if (p2) {
         result += ` ${p2}`;
       }
+
+      // 제품명 뒤에 오는 문자열 처리
       if (p3) {
-        result += ` ${p3}`;
+        result += ` ${p3.trim()}`;
       }
+
       return result;
     });
 
-    // 애플 -> Apple
-    if (search.includes('애플')) {
+    // 애플 -> Apple, 인데 '애플워치'는 그대로 두기
+    if (search.includes('애플') && !search.includes('애플워치')) {
       search = search.replace('애플', 'Apple');
     }
 
@@ -37,6 +54,12 @@ export class SearchService {
       search = search.replace('아이폰 미니', '아이폰 Mini');
     }
 
+    // 아이패드 미니-> 아이패드 mini
+    if (search.includes('아이패드 미니')) {
+      search = search.replace('아이패드 미니', '아이패드 mini');
+    }
+
+    console.log(`transformed search: ${search}`);
     return search;
   }
 
