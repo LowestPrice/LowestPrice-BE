@@ -50,9 +50,10 @@ export class ProductController {
 
   //* 상품 상세 조회
   @Get(':productId')
-  async getProductDetail(@Param('productId', ParseIntPipe) productId: number) {
-    const result: GetOneProductDto =
-      await this.productService.getProductDetail(productId);
+  async getProductDetail(
+    @Param('productId', ParseIntPipe) productId: number
+  ): Promise<object> {
+    const result = await this.productService.getProductDetail(productId);
 
     return result;
   }
