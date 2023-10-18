@@ -27,5 +27,5 @@ if pm2 list | grep -q "lowest-price"; then
   pm2 reload lowest-price
 else
   echo "> start application"
-  pm2 start dist/src/main.js --name lowest-price
+  pm2 start dist/main.js --name lowest-price
 fi
