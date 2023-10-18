@@ -164,8 +164,10 @@ export class MagazineService {
       },
     });
 
-    console.log(magazines);
-    return magazines;
+    const parseLikeMagazines: object[] =
+      this.parseLikeMagazinesModel(magazines);
+
+    return { data: parseLikeMagazines };
   }
 
   async setLike(magazineId: number, userId: number): Promise<object> {
