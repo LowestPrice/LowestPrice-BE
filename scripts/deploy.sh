@@ -20,6 +20,12 @@ npm install
 echo "> build application"
 nest build
 
-# application 재실행
-echo "> reload application"
-sudo pm2 reload lowest-price
+
+# pm2 실행 또는 리로드
+if pm2 list | grep -q "lowest-price"; then
+  echo "> reload application"
+  pm2 reload lowest-price
+else
+  echo "> start application"
+  pm2 start dist/main.js --name lowest-price
+fi
