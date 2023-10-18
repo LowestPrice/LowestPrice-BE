@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { ProductOptionController } from './product-option/product-option.controller';
 import { ProductOptionService } from './product-option/product-option.service';
 import { ProductOptionModule } from './product-option/product-option.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ProductOptionModule } from './product-option/product-option.module';
     PriceHistoryModule,
     AuthModule,
     ProductOptionModule,
+    SearchModule,
   ],
   controllers: [AppController, ProductOptionController],
   providers: [AppService, ProductOptionService],
