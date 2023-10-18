@@ -11,11 +11,11 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
-  @Get('/kakao')
-  @UseGuards(AuthGuard('kakao'))
-  kakaoLogin(): any {
-    // do nothing
-  }
+  // @Get('/kakao')
+  // @UseGuards(AuthGuard('kakao'))
+  // kakaoLogin(): any {
+  //   // do nothing
+  // }
 
   //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
@@ -54,22 +54,24 @@ export class AuthController {
     //*! 프론트랑 연결 될 수 있게 옵션 설정 잘 해줘야함
     // res.setHeader('Authorization', `Bearer ${accessToken}`);
     res.cookie('Authorization', `Bearer ${accessToken}`, {
-      httpOnly: true, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
-      sameSite: 'none',
+      //sameSite: 'none',
+      sameSite: 'lax',
       secure: false,
       maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
     });
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-      //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
-      sameSite: 'none',
-      secure: false,
-      maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
-    });
+    // res.cookie('refreshToken', refreshToken, {
+    //   httpOnly: true, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+    //   //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
+    //   sameSite: 'none',
+    //   secure: false,
+    //   maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
+    // });
 
     // 프론트 url
+    //! 리다이렉트해야 쿠키가 넘어갑니다!
     res.redirect(`${process.env.CLIENT_URL}`);
     // res.json({ message: '로그인에 성공했습니다.' });
   }
