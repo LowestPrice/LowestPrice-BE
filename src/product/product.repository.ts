@@ -166,11 +166,6 @@ export class ProductRepository {
           },
           {
             NOT: {
-              discountRate: 0, // 할인이 없는 상품은 제외
-            },
-          },
-          {
-            NOT: {
               discountRate: null, // null 값인 상품은 제외
             },
           },
