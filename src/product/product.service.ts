@@ -1,6 +1,5 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
-import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 
 @Injectable()
 export class ProductService {
@@ -51,10 +50,6 @@ export class ProductService {
   //* 상품 상세 조회
   async getProductDetail(productId: number) {
     const product = await this.productRepository.getProductDetail(productId);
-
-    if (!product) {
-      throw new NotFoundProductException();
-    }
 
     const parseProduct = this.parseProductModel(product);
 
