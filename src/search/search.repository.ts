@@ -6,25 +6,28 @@ export class SearchRepository {
   constructor(private prisma: PrismaService) {}
 
   async searchProduct(search: string) {
-    // 공백을 기준으로 검색어를 각각 분리
+    // 공백을 기준으로 검색어를 각각 분리해서 배열로 만듬
     const searchWords = search.split(' ');
     // 검색어가 포함된 상품을 찾기 위한 조건
+    // 배열의 각 요소에 대해 productName에 검색어가 포함되었는지 검사하는 조건이 담긴 객체가 포함된 배열을 만듬
     const searchCondition = searchWords.map((word) => ({
       productName: {
+        // 부분 문자열 일치를 검색하기 위해 contains를 사용
         contains: word,
       },
     }));
 
-    // 전체 검색어도 포함
-    searchCondition.push({
-      productName: {
-        contains: search,
-      },
-    });
-    // 검색어가 1개인 경우
+    // // 전체 검색어도 포함 // 이거를 추가하게 되면 AND 로 했을때 이 조건도 충족해야해서 제외
+    // searchCondition.push({
+    //   productName: {
+    //     contains: search,
+    //   },
+    // });
+
+    //* 검색결과 조회시 AND 조건으로 조회
     const products = await this.prisma.product.findMany({
       where: {
-        OR: searchCondition, //검색어가 포함된 상품을 찾는다.
+        AND: searchCondition, //검색어가 포함된 상품을 찾는다.
       },
       select: {
         productId: true,
