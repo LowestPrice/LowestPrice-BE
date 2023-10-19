@@ -30,3 +30,10 @@ export class NotFoundCategoryFilterException extends HttpException {
     super('해당 필터가 존재하지 않습니다.', HttpStatus.NOT_FOUND);
   }
 }
+
+//* Search Exception
+export class NotFoundSearchFilterException extends HttpException {
+  constructor() {
+    super('해당 검색 필터가 존재하지 않습니다.', HttpStatus.BAD_REQUEST);
+  }
+}
