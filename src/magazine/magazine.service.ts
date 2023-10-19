@@ -25,61 +25,10 @@ export class MagazineService {
     data: Prisma.MagazineCreateInput
   ): Promise<object> {
     try {
-      console.log(`진입`);
-      const key = `${Date.now()}${extname(file.originalname)}`;
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        // ACL: 'public-read',
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      };
-      // s3 업로드
-
-      //1
-      // const upload = await this.s3
-      //   .putObject({
-      //     Key: key,
-      //     Body: file.buffer,
-      //     ContentType: file.mimetype,
-      //     Bucket: process.env.AWS_S3_BUCKET_NAME,
-      //     // ACL: 'public-read',
-      //   })
-      //   .promise();
-      //2
-      // const uploadObject = new Promise((resolve, reject) => {
-      //   return this.s3.putObject(params, (err, data) => {
-      //     if (err) reject(err);
-      //     resolve(key);
-      //   });
-      // });
-
-      //3
-      const uploadObject: ManagedUpload.SendData = await this.s3
-        .upload(params)
-        .promise();
-
-      const fileUrl = uploadObject.Location;
-
-      data.mainImage = fileUrl;
-      // const uploadObject = new Promise(
-      //   (resolve, reject) => {
-      //     this.s3.upload(params, (err, data: ManagedUpload.SendData) => {
-      //       if (err) {
-      //         console.error('S3 업로드 중 에러 발생:', err);
-      //         reject('파일 업로드 중 에러가 발생했습니다.');
-      //       }
-      //       resolve(data);
-      //     });
-      //   }
-      // );
-
-      //const uploadResult = await this.s3.putObject(params).promise();
-
-      //console.log(uploadObject);
-      // const res = await this.s3.upload(params).promise();
-      // console.log(res);
-      console.log(fileUrl);
+      if (file) {
+        const uploadObject = this.uploadFile(file);
+        data.mainImage = (await uploadObject).Location;
+      }
 
       const magazine: Magazine | null = await this.prisma.magazine.create({
         data,
@@ -144,13 +93,22 @@ export class MagazineService {
     return { data: parseLikeMagazine };
   }
 
-  async update(id: number, data: Prisma.MagazineUpdateInput): Promise<object> {
+  async update(
+    id: number,
+    file: Express.Multer.File,
+    data: Prisma.MagazineUpdateInput
+  ): Promise<object> {
     const isExist: Object = await this.findOne(id);
     if (!isExist['data']) {
       throw new HttpException(
         '해당 매거진이 존재하지 않습니다.',
         HttpStatus.NOT_FOUND
       );
+    }
+
+    if (file) {
+      const uploadObject = this.uploadFile(file);
+      data.mainImage = (await uploadObject).Location;
     }
 
     const magazine: Magazine | null = await this.prisma.magazine.update({
@@ -177,6 +135,39 @@ export class MagazineService {
       },
     });
     return { message: '매거진 삭제에 성공했습니다.' };
+  }
+
+  //* 해당 매거진 제외한 나머지 매거진 리스트 조회
+  //! 해당 매거진 존재 여부 예외 처리 안함
+  async excludeOne(id: number): Promise<object> {
+    const magazines: Object[] | null = await this.prisma.magazine.findMany({
+      where: {
+        NOT: {
+          magazineId: id,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        magazineId: true,
+        title: true,
+        content: true,
+        mainImage: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
+      },
+    });
+
+    const parseLikeMagazines: object[] =
+      this.parseLikeMagazinesModel(magazines);
+
+    return { data: parseLikeMagazines };
   }
 
   async setLike(magazineId: number, userId: number): Promise<object> {
@@ -305,4 +296,46 @@ export class MagazineService {
     });
     return obj;
   }
+
+  //! 파일 업로드 부분
+  async uploadFile(file: Express.Multer.File): Promise<ManagedUpload.SendData> {
+    console.log(`진입`);
+    const key = `${Date.now()}${extname(file.originalname)}`;
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      // ACL: 'public-read',
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
+
+    const uploadObject: ManagedUpload.SendData = await this.s3
+      .upload(params)
+      .promise();
+
+    //const fileUrl = uploadObject.Location;
+
+    return uploadObject;
+  }
 }
+
+// const magazines: Array<Object> = await this.prisma.magazine.findMany({
+//   where: {
+//     NOT: {
+//       magazineId: id,
+//     },
+//   },
+//   select: {
+//     magazineId: true,
+//     title: true,
+//     content: true,
+//     mainImage: true,
+//     createdAt: true,
+//     updatedAt: true,
+//     _count: {
+//       select: {
+//         LikeMagazine: true,
+//       },
+//     },
+//   },
+// });

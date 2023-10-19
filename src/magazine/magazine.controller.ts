@@ -23,10 +23,9 @@ export class MagazineController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   create(
-    @UploadedFile()
-    file // new ParseFilePipeBuilder().build({
-    //   fileIsRequired: true,
+    @UploadedFile() // new ParseFilePipeBuilder().build({
     // })
+    file //   fileIsRequired: true,
     : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
@@ -57,16 +56,24 @@ export class MagazineController {
   //* 매거진 수정
   @Put('/:magazineId')
   update(
+    @UploadedFile()
+    file: Express.Multer.File,
     @Param('magazineId') magazineId: number,
     @Body() updateMagazineDto: UpdateMagazineDto
   ) {
-    return this.magazineService.update(magazineId, updateMagazineDto);
+    return this.magazineService.update(magazineId, file, updateMagazineDto);
   }
 
   //* 매거진 삭제
   @Delete('/:magazineId')
   remove(@Param('magazineId') magazineId: number) {
     return this.magazineService.remove(magazineId);
+  }
+
+  //* 현재 매거진 제외한 나머지 매거진 리스트
+  @Get('/:magazineId/list')
+  excludeOne(@Param('magazineId') magazineId: number) {
+    return this.magazineService.excludeOne(magazineId);
   }
 
   //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
