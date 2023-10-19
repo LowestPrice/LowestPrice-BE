@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
+import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 
 @Injectable()
 export class ProductService {
@@ -52,7 +53,7 @@ export class ProductService {
     const product = await this.productRepository.getProductDetail(productId);
 
     if (!product) {
-      throw new HttpException('선택한 페이지를 찾을 수 없습니다.', 404);
+      throw new NotFoundProductException();
     }
 
     const parseProduct = this.parseProductModel(product);
