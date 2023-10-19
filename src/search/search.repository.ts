@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -54,6 +55,11 @@ export class SearchRepository {
         },
       },
     });
+
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
     return products;
   }
 
