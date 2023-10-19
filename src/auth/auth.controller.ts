@@ -27,7 +27,9 @@ export class AuthController {
     //! service 단으로 이동해서 정리해야함
 
     //* db에 사용자가 있는지 확인
-    let isExistKaKaoUser = await this.authService.findKakaoUser(kakaoUser);
+    let isExistKaKaoUser = await this.authService.findKakaoUser(
+      kakaoUser.snsId
+    );
     if (!isExistKaKaoUser) {
       isExistKaKaoUser = await this.authService.createKakaoUser(kakaoUser);
     }

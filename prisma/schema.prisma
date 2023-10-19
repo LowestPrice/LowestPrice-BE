@@ -12,9 +12,9 @@ datasource db {
 
 model User {
   userId       Int       @id @default(autoincrement()) @map("id")
-  email        String    @unique
+  email        String?   
   nickname     String
-  snsId        String
+  snsId        String    @unique
   provider     String
   image        String?
   createdAt    DateTime  @default(now())

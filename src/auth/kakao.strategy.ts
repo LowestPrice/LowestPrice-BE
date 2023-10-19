@@ -9,7 +9,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       clientID: process.env.KAKAO_CLIENT_ID,
       clientSecret: process.env.KAKAO_CLIENT_SECRET,
       callbackURL: process.env.KAKAO_CALLBACK_URL, //리다이렉트 url
-      scope: ['account_email', 'profile_nickname'],
+      scope: ['account_email', 'profile_nickname', 'profile_image'], //* 이메일은 필수 x
     });
   }
 
@@ -29,6 +29,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       snsId: String(profile.id),
       nickname: profile.displayName,
       provider: profile.provider,
+      image: profile._json.profile_image,
     };
 
     done(null, user);
