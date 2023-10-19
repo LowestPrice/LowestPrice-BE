@@ -76,6 +76,21 @@ export class SearchService {
     return { data: parseProducts };
   }
 
+  //* 상품 검색 필터기능
+  async searchProductByFilter(search: string, filter: string) {
+    // 변환된 검색어
+    const transformedSearch = this.transformSearch(search);
+
+    const products = await this.searchRepository.searchProductByFilter(
+      transformedSearch,
+      filter
+    );
+
+    const parseProducts = this.parseProductsModel(products);
+
+    return { data: parseProducts };
+  }
+
   private parseProductsModel(products: object[]): object {
     return products.map((product) => {
       let obj = {};

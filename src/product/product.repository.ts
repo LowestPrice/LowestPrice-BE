@@ -1,5 +1,10 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
+import {
+  NotFoundCategoryException,
+  NotFoundCategoryFilterException,
+  NotFoundProductException,
+} from 'src/common/exceptions/custom-exception';
 
 @Injectable()
 export class ProductRepository {
@@ -33,6 +38,7 @@ export class ProductRepository {
         },
       },
     });
+
     return products;
   }
 
@@ -85,11 +91,24 @@ export class ProductRepository {
         },
       },
     });
+
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
     return products;
   }
 
   //* 상품 카테고리별 조회
   async getProductsByCategory(categoryName: string) {
+    const categoryExists = await this.prisma.category.findUnique({
+      where: { categoryName: categoryName },
+    });
+
+    if (!categoryExists) {
+      throw new NotFoundCategoryException();
+    }
+
     const products = await this.prisma.product.findMany({
       where: {
         ProductCategory: {
@@ -125,11 +144,25 @@ export class ProductRepository {
         },
       },
     });
+
+    // 해당카테고리에 제품이 없으면 Not Found 예외처리
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
     return products;
   }
 
   //* 상품 카테고리별 필터기능 조회
   async getProductsByCategoryAndFilter(categoryName: string, filter: string) {
+    const categoryExists = await this.prisma.category.findUnique({
+      where: { categoryName: categoryName },
+    });
+
+    if (!categoryExists) {
+      throw new NotFoundCategoryException();
+    }
+
     let orderBy = {};
 
     switch (filter) {
@@ -149,7 +182,7 @@ export class ProductRepository {
         };
         break;
       default:
-        throw new HttpException('잘못된 요청입니다.', 400);
+        throw new NotFoundCategoryFilterException();
     }
 
     const products = await this.prisma.product.findMany({
@@ -162,11 +195,6 @@ export class ProductRepository {
                   categoryName,
                 },
               },
-            },
-          },
-          {
-            NOT: {
-              discountRate: 0, // 할인이 없는 상품은 제외
             },
           },
           {
@@ -205,6 +233,11 @@ export class ProductRepository {
         },
       },
     });
+
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
     return products;
   }
 
@@ -240,6 +273,10 @@ export class ProductRepository {
         },
       },
     });
+
+    if (!product) {
+      throw new NotFoundProductException();
+    }
 
     return product;
   }
