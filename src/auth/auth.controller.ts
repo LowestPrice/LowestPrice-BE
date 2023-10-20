@@ -11,11 +11,30 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
-  // @Get('/kakao')
-  // @UseGuards(AuthGuard('kakao'))
-  // kakaoLogin(): any {
-  //   // do nothing
-  // }
+  @Get('/login')
+  async test(@Res({ passthrough: true }) res) {
+    const id: number = 37;
+    const jwtPayload = {
+      userId: id, //! userId로 보내는게 괜찮은가 보안상 문제
+    };
+
+    const accessToken = this.jwtService.sign(jwtPayload, {
+      expiresIn: '5h',
+      secret: process.env.JWT_SECRET,
+    });
+
+    res.cookie('Authorization', `Bearer ${accessToken}`, {
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
+      //sameSite: 'none',
+      sameSite: 'lax',
+      secure: false,
+      maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
+    });
+
+    console.log(accessToken);
+    return { message: 'test성공' };
+  }
 
   //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
@@ -33,8 +52,6 @@ export class AuthController {
     if (!isExistKaKaoUser) {
       isExistKaKaoUser = await this.authService.createKakaoUser(kakaoUser);
     }
-
-    //* db에서 사용자 생성
 
     //* jwt 발급
     const jwtPayload = {
@@ -72,9 +89,8 @@ export class AuthController {
     //   maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
     // });
 
-    // 프론트 url
-    //! 리다이렉트해야 쿠키가 넘어갑니다!
-    res.redirect(`${process.env.CLIENT_URL}`);
+
+    res.redirect(`${process.env.CLIENT_URL}`); //! 프론트 url & 리다이렉트 해야 쿠키가 넘어감
     // res.json({ message: '로그인에 성공했습니다.' });
   }
 }
