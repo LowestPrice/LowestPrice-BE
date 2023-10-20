@@ -25,6 +25,14 @@ export class MagazineService {
     data: Prisma.MagazineCreateInput
   ): Promise<object> {
     try {
+      //접근 권한 확인
+      // if (userId !== 1) {
+      //   throw new HttpException(
+      //     '관리자만 접근 가능합니다.',
+      //     HttpStatus.FORBIDDEN
+      //   );
+      // }
+
       if (file) {
         const uploadObject = this.uploadFile(file);
         data.mainImage = (await uploadObject).Location;
@@ -63,11 +71,8 @@ export class MagazineService {
       },
     });
 
-    console.log(magazines);
     const parseLikeMagazines: object[] =
       this.parseLikeMagazinesModel(magazines);
-
-    console.log(parseLikeMagazines);
 
     return { data: parseLikeMagazines };
   }
