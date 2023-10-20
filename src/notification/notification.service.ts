@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Product, UserProduct } from '@prisma/client';
+import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -22,10 +23,7 @@ export class NotificationService {
     const isExist: Promise<Product> | null = this.findProduct(productId);
 
     if (!isExist) {
-      throw new HttpException(
-        '해당 제품이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundProductException();
     }
 
     // 1. '알림' 여부 확인
