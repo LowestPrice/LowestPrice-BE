@@ -8,27 +8,40 @@ import {
   UseInterceptors,
   UploadedFile,
   Put,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { MagazineService } from './magazine.service';
 import { CreateMagazineDto } from './dto/create.magazine.dto';
 import { UpdateMagazineDto } from './dto/update.magazine.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
+interface CustomRequest extends Request {
+  user: {
+    id: number;
+  };
+}
 @Controller('magazines')
 export class MagazineController {
   constructor(private readonly magazineService: MagazineService) {}
 
   //* 매거진 등록
   // 로그인 사용자 필요
+  //@UseGuards(JwtAuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   create(
+    @Req() req: CustomRequest,
     @UploadedFile() // new ParseFilePipeBuilder().build({
     // })
     file //   fileIsRequired: true,
     : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
+    //const userId: number = req.user.id;
+    //console.log(userId);
     console.log(file);
     return this.magazineService.create(file, createMagazineDto);
   }
@@ -55,6 +68,7 @@ export class MagazineController {
 
   //* 매거진 수정
   @Put('/:magazineId')
+  @UseInterceptors(FileInterceptor('file'))
   update(
     @UploadedFile()
     file: Express.Multer.File,
