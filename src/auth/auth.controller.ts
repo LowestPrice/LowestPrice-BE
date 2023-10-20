@@ -42,7 +42,7 @@ export class AuthController {
     };
 
     const accessToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: '5m',
+      expiresIn: '5h',
       secret: process.env.JWT_SECRET,
     });
 
