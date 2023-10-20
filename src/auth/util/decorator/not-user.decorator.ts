@@ -8,8 +8,9 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     
     response.status(401).json({
+      success: false,
       statusCode: 401,
-      message: '로그인 후 이용해주세요', // 원하는 에러 메시지로 변경할 수 있습니다.
+      errorMessage: '로그인 후 이용 가능합니다.', // 원하는 에러 메시지로 변경할 수 있습니다.
     });
   }
 }

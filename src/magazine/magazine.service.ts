@@ -5,6 +5,7 @@ import * as AWS from 'aws-sdk';
 import { extname, resolve } from 'path';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
 import { Console } from 'console';
+import { AdminAccessDeniedException, NotFoundMagzineException } from 'src/common/exceptions/custom-exception';
 @Injectable()
 export class MagazineService {
   private readonly s3: AWS.S3;
@@ -99,10 +100,7 @@ export class MagazineService {
 
     const isExist: Object = await this.findOne(id);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     if (file) {
@@ -124,10 +122,7 @@ export class MagazineService {
 
     const isExist: Object = await this.findOne(id);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     const magazine: Magazine | null = await this.prisma.magazine.delete({
@@ -175,10 +170,7 @@ export class MagazineService {
     //* 0. 매거진 존재 여부 확인
     const isExist: Object = await this.findOne(magazineId);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     //* 1. '좋아요' 여부 확인
@@ -249,10 +241,7 @@ export class MagazineService {
   //* 관리자 권한 확인
   checkAdmin(userId: number): void {
     if (userId !== Number(process.env.ADMIN)) {
-      throw new HttpException(
-        '관리자만 접근 가능합니다.',
-        HttpStatus.FORBIDDEN
-      );
+      throw new AdminAccessDeniedException();
     }
   }
 
