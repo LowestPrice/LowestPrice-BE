@@ -51,10 +51,6 @@ export class ProductService {
   async getProductDetail(productId: number) {
     const product = await this.productRepository.getProductDetail(productId);
 
-    if (!product) {
-      throw new HttpException('선택한 페이지를 찾을 수 없습니다.', 404);
-    }
-
     const parseProduct = this.parseProductModel(product);
 
     return { data: parseProduct };

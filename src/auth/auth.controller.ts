@@ -11,12 +11,6 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
-  // @Get('/kakao')
-  // @UseGuards(AuthGuard('kakao'))
-  // kakaoLogin(): any {
-  //   // do nothing
-  // }
-
   //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
   @Get('/api/kakao/callback')
@@ -27,12 +21,12 @@ export class AuthController {
     //! service 단으로 이동해서 정리해야함
 
     //* db에 사용자가 있는지 확인
-    let isExistKaKaoUser = await this.authService.findKakaoUser(kakaoUser);
+    let isExistKaKaoUser = await this.authService.findKakaoUser(
+      kakaoUser.snsId
+    );
     if (!isExistKaKaoUser) {
       isExistKaKaoUser = await this.authService.createKakaoUser(kakaoUser);
     }
-
-    //* db에서 사용자 생성
 
     //* jwt 발급
     const jwtPayload = {
@@ -40,7 +34,7 @@ export class AuthController {
     };
 
     const accessToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: '5m',
+      expiresIn: '5h',
       secret: process.env.JWT_SECRET,
     });
 
@@ -49,6 +43,7 @@ export class AuthController {
       secret: process.env.JWT_REFRESH_SECRET,
     });
 
+    console.log(`jwt-accessToken: ${accessToken}`)
     await this.authService.saveRefresh(isExistKaKaoUser.userId, refreshToken);
 
     //*! 프론트랑 연결 될 수 있게 옵션 설정 잘 해줘야함
@@ -70,9 +65,8 @@ export class AuthController {
     //   maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
     // });
 
-    // 프론트 url
-    //! 리다이렉트해야 쿠키가 넘어갑니다!
-    res.redirect(`${process.env.CLIENT_URL}`);
+
+    res.redirect(`${process.env.CLIENT_URL}`); //! 프론트 url & 리다이렉트 해야 쿠키가 넘어감
     // res.json({ message: '로그인에 성공했습니다.' });
   }
 }
