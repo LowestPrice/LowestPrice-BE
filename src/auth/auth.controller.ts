@@ -11,31 +11,6 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
-  @Get('/login')
-  async test(@Res({ passthrough: true }) res) {
-    const id: number = 37;
-    const jwtPayload = {
-      userId: id, //! userId로 보내는게 괜찮은가 보안상 문제
-    };
-
-    const accessToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: '5h',
-      secret: process.env.JWT_SECRET,
-    });
-
-    res.cookie('Authorization', `Bearer ${accessToken}`, {
-      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-      //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
-      //sameSite: 'none',
-      sameSite: 'lax',
-      secure: false,
-      maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
-    });
-
-    console.log(accessToken);
-    return { message: 'test성공' };
-  }
-
   //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
   @Get('/api/kakao/callback')
@@ -68,6 +43,7 @@ export class AuthController {
       secret: process.env.JWT_REFRESH_SECRET,
     });
 
+    console.log(`jwt-accessToken: ${accessToken}`)
     await this.authService.saveRefresh(isExistKaKaoUser.userId, refreshToken);
 
     //*! 프론트랑 연결 될 수 있게 옵션 설정 잘 해줘야함
