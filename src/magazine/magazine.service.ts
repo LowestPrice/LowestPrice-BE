@@ -5,6 +5,7 @@ import * as AWS from 'aws-sdk';
 import { extname, resolve } from 'path';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
 import { Console } from 'console';
+import { AdminAccessDeniedException, NotFoundMagzineException } from 'src/common/exceptions/custom-exception';
 @Injectable()
 export class MagazineService {
   private readonly s3: AWS.S3;
@@ -21,26 +22,22 @@ export class MagazineService {
   // Todo: 매거진 상세조회, 수정, 삭제 시 매거진 존재하는지 확인하는 로직 추가
 
   async create(
+    userId: number,
     file: Express.Multer.File,
     data: Prisma.MagazineCreateInput
   ): Promise<object> {
-    try {
-      if (file) {
-        const uploadObject = this.uploadFile(file);
-        data.mainImage = (await uploadObject).Location;
-      }
+    this.checkAdmin(userId);
 
-      const magazine: Magazine | null = await this.prisma.magazine.create({
-        data,
-      });
-
-      return { message: '매거진 등록에 성공했습니다.' };
-    } catch (err) {
-      throw new HttpException(
-        '서버 내부 에러가 발생했습니다.',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
+    if (file) {
+      const uploadObject = this.uploadFile(file);
+      data.mainImage = (await uploadObject).Location;
     }
+
+    const magazine: Magazine | null = await this.prisma.magazine.create({
+      data,
+    });
+
+    return { message: '매거진 등록에 성공했습니다.' };
   }
 
   async findAll(): Promise<object> {
@@ -94,16 +91,16 @@ export class MagazineService {
   }
 
   async update(
+    userId: number,
     id: number,
     file: Express.Multer.File,
     data: Prisma.MagazineUpdateInput
   ): Promise<object> {
+    this.checkAdmin(userId);
+
     const isExist: Object = await this.findOne(id);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     if (file) {
@@ -120,13 +117,12 @@ export class MagazineService {
     return { message: '매거진 수정에 성공했습니다.' };
   }
 
-  async remove(id: number): Promise<object> {
+  async remove(userId: number, id: number): Promise<object> {
+    this.checkAdmin(userId);
+
     const isExist: Object = await this.findOne(id);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     const magazine: Magazine | null = await this.prisma.magazine.delete({
@@ -174,10 +170,7 @@ export class MagazineService {
     //* 0. 매거진 존재 여부 확인
     const isExist: Object = await this.findOne(magazineId);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     //* 1. '좋아요' 여부 확인
@@ -245,6 +238,14 @@ export class MagazineService {
     return { data: parseLikeMagazines };
   }
 
+  //* 관리자 권한 확인
+  checkAdmin(userId: number): void {
+    if (userId !== Number(process.env.ADMIN)) {
+      throw new AdminAccessDeniedException();
+    }
+  }
+
+
   //* 객체 한줄로 펴주기(배열)
   parseLikeMagazinesModel(Magazines: object[]) {
     return Magazines.map((Magazine) => {
@@ -252,10 +253,18 @@ export class MagazineService {
 
       // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
       Object.entries(Magazine).forEach(([key, value]) => {
-        if (typeof value === 'object' && !(value instanceof Date)) {
+        if (
+          typeof value === 'object' &&
+          !(value instanceof Date) &&
+          value !== null
+        ) {
           // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
           Object.entries(value).forEach(([subKey, subValue]) => {
-            if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+            if (
+              typeof subValue === 'object' &&
+              !(subValue instanceof Date) &&
+              subValue !== null //? null 값일 때 처리 부분
+            ) {
               // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
               Object.entries(subValue).forEach(([subKey1, subValue1]) => {
                 obj[subKey1] = subValue1;
@@ -278,10 +287,18 @@ export class MagazineService {
 
     // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
     Object.entries(Magazine).forEach(([key, value]) => {
-      if (typeof value === 'object' && !(value instanceof Date)) {
+      if (
+        typeof value === 'object' &&
+        !(value instanceof Date) &&
+        value !== null
+      ) {
         // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
         Object.entries(value).forEach(([subKey, subValue]) => {
-          if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+          if (
+            typeof subValue === 'object' &&
+            !(subValue instanceof Date) &&
+            value !== null
+          ) {
             // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
             Object.entries(subValue).forEach(([subKey1, subValue1]) => {
               obj[subKey1] = subValue1;
@@ -318,24 +335,3 @@ export class MagazineService {
     return uploadObject;
   }
 }
-
-// const magazines: Array<Object> = await this.prisma.magazine.findMany({
-//   where: {
-//     NOT: {
-//       magazineId: id,
-//     },
-//   },
-//   select: {
-//     magazineId: true,
-//     title: true,
-//     content: true,
-//     mainImage: true,
-//     createdAt: true,
-//     updatedAt: true,
-//     _count: {
-//       select: {
-//         LikeMagazine: true,
-//       },
-//     },
-//   },
-// });

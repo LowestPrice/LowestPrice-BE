@@ -12,4 +12,5 @@ export interface KakaoUserAfterAuth {
   snsId: string;
   nickname: string;
   provider: string;
+  image: string;
 }
