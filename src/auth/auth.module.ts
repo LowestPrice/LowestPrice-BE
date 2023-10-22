@@ -5,15 +5,17 @@ import { KakaoStrategy } from './kakao.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtStrategy } from './jwt.strategy';
-import { sign } from 'crypto';
-import { JwtConfigService } from 'src/config/jwt.config.service';
+import { JwtConfigService } from 'src/common/config/jwt.config.service';
 
 @Module({
-  imports: [JwtModule.registerAsync({
-    useClass: JwtConfigService
-  }), PrismaModule],
+  imports: [
+    JwtModule.registerAsync({
+      useClass: JwtConfigService,
+    }),
+    PrismaModule,
+  ],
   controllers: [AuthController],
   providers: [AuthService, JwtConfigService, KakaoStrategy, JwtStrategy],
-  exports: [JwtStrategy, JwtConfigService]
+  exports: [JwtStrategy, JwtConfigService],
 })
 export class AuthModule {}

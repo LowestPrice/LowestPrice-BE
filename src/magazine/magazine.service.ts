@@ -5,7 +5,10 @@ import * as AWS from 'aws-sdk';
 import { extname, resolve } from 'path';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
 import { Console } from 'console';
-import { AdminAccessDeniedException, NotFoundMagzineException } from 'src/common/exceptions/custom-exception';
+import {
+  AdminAccessDeniedException,
+  NotFoundMagzineException,
+} from 'src/common/exceptions/custom-exception';
 @Injectable()
 export class MagazineService {
   private readonly s3: AWS.S3;
@@ -40,7 +43,7 @@ export class MagazineService {
     return { message: '매거진 등록에 성공했습니다.' };
   }
 
-  async findAll(): Promise<object> {
+  async findAll(userId: number | null): Promise<object> {
     const magazines: Object[] | null = await this.prisma.magazine.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -63,7 +66,28 @@ export class MagazineService {
     const parseLikeMagazines: object[] =
       this.parseLikeMagazinesModel(magazines);
 
-    return { data: parseLikeMagazines };
+    // 사용자별 조회시 좋아요 설정 표시
+    //! 매거진 관련 전체 조회 부분에 설정 필요(2023.10.22.)
+    const magazinesWithUserLikeStatus: object[] = await Promise.all(
+      parseLikeMagazines.map(async (magazine: Magazine) => {
+        let isLiked: object;
+        if (userId) {
+          // 사용자인 경우 진행
+          isLiked = await this.prisma.likeMagazine.findFirst({
+            where: {
+              UserId: userId,
+              MagazineId: magazine.magazineId,
+            },
+          });
+        }
+        return {
+          ...magazine,
+          isLiked: isLiked ? true : false,
+        };
+      })
+    );
+
+    return { data: magazinesWithUserLikeStatus };
   }
 
   async findOne(id: number): Promise<object> {
@@ -85,6 +109,10 @@ export class MagazineService {
         },
       },
     });
+
+    if (!magazine) {
+      throw new NotFoundMagzineException();
+    }
 
     const parseLikeMagazine: object = this.parseLikeMagazineModel(magazine);
     return { data: parseLikeMagazine };
@@ -166,7 +194,7 @@ export class MagazineService {
     return { data: parseLikeMagazines };
   }
 
-  async setLike(magazineId: number, userId: number): Promise<object> {
+  async setLike(userId: number, magazineId: number): Promise<object> {
     //* 0. 매거진 존재 여부 확인
     const isExist: Object = await this.findOne(magazineId);
     if (!isExist['data']) {
@@ -245,7 +273,6 @@ export class MagazineService {
     }
   }
 
-
   //* 객체 한줄로 펴주기(배열)
   parseLikeMagazinesModel(Magazines: object[]) {
     return Magazines.map((Magazine) => {
@@ -297,7 +324,7 @@ export class MagazineService {
           if (
             typeof subValue === 'object' &&
             !(subValue instanceof Date) &&
-            value !== null
+            subValue !== null
           ) {
             // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
             Object.entries(subValue).forEach(([subKey1, subValue1]) => {
