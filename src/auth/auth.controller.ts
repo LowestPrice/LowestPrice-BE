@@ -47,7 +47,7 @@ export class AuthController {
     //  maxAge: 36000000, // 쿠키 만료 시간 설정 (예: 1시간)
     //});
 
-    const redirect_url = `${process.env.CLIENT_URL}/kakaologin?authorization=${accessToken}`;
+    const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}`;
     console.log(redirect_url); // 백엔드에서 확인
     res.redirect(redirect_url);
   }
