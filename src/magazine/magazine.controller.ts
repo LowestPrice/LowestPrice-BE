@@ -39,8 +39,8 @@ export class MagazineController {
   create(
     @Req() req: CustomRequest,
     @UploadedFile() // new ParseFilePipeBuilder().build({
-    //   fileIsRequired: true,
-    file // })
+    // })
+    file //   fileIsRequired: true,
     : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
@@ -50,7 +50,7 @@ export class MagazineController {
 
   //* 매거진 조회
   @Get()
-  @UseGuards(OptionalJwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
   findAll(@Req() req: CustomRequest) {
     let userId = null;
     // 인증된 사용자인 경우 userId를 설정
@@ -75,8 +75,9 @@ export class MagazineController {
   @Get('/:magazineId')
   @UseGuards(AuthGuard('jwt'))
   @UseFilters(UnauthorizedExceptionFilter)
-  findOne(@Param('magazineId') magazineId: number) {
-    return this.magazineService.findOne(magazineId);
+  findOne(@Req() req: CustomRequest, @Param('magazineId') magazineId: number) {
+    const userId: number = req.user.userId;
+    return this.magazineService.findOne(magazineId, userId);
   }
 
   //* 매거진 수정
@@ -111,8 +112,17 @@ export class MagazineController {
 
   //* 현재 매거진 제외한 나머지 매거진 리스트
   @Get('/:magazineId/list')
-  excludeOne(@Param('magazineId') magazineId: number) {
-    return this.magazineService.excludeOne(magazineId);
+  @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
+  excludeOne(
+    @Req() req: CustomRequest,
+    @Param('magazineId') magazineId: number
+  ) {
+    let userId = null;
+    // 인증된 사용자인 경우 userId를 설정
+    if (req.user) {
+      userId = req.user.userId;
+    }
+    return this.magazineService.exceptOne(magazineId, userId);
   }
 
   //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
