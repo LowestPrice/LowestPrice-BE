@@ -30,6 +30,7 @@ interface CustomRequest extends Request {
 @Controller('magazines')
 export class MagazineController {
   constructor(private readonly magazineService: MagazineService) {}
+  //! 2023.10.23. 매거진 조회 - 모든 사용자 볼 수 있게 공개
 
   //* 매거진 등록
   @Post()
@@ -39,8 +40,8 @@ export class MagazineController {
   create(
     @Req() req: CustomRequest,
     @UploadedFile() // new ParseFilePipeBuilder().build({
-    // })
-    file //   fileIsRequired: true,
+    //   fileIsRequired: true,
+    file // })
     : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
@@ -49,6 +50,7 @@ export class MagazineController {
   }
 
   //* 매거진 조회
+  //? 옳지 않는 토큰값을 가지고 왔을 때 처리 필요
   @Get()
   @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
   findAll(@Req() req: CustomRequest) {
@@ -73,8 +75,7 @@ export class MagazineController {
 
   //* 매거진 상세 조회
   @Get('/:magazineId')
-  @UseGuards(AuthGuard('jwt'))
-  @UseFilters(UnauthorizedExceptionFilter)
+  @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
   findOne(@Req() req: CustomRequest, @Param('magazineId') magazineId: number) {
     const userId: number = req.user.userId;
     return this.magazineService.findOne(magazineId, userId);
