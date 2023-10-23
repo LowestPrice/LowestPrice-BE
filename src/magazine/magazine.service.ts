@@ -378,8 +378,7 @@ export class MagazineService {
 
   //! 파일 업로드 부분
   async uploadFile(file: Express.Multer.File): Promise<ManagedUpload.SendData> {
-    console.log(`진입`);
-    const key = `${Date.now()}${extname(file.originalname)}`;
+    const key = `magazine-images/${Date.now()}${extname(file.originalname)}`;
     const params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       // ACL: 'public-read',
