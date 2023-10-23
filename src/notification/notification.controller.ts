@@ -21,15 +21,11 @@ interface CustomRequest extends Request {
 export class NotificationController {
   constructor(private readonly notificationSevice: NotificationService) {}
 
-  //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제
   //* 알림 설정한 상품 조회
   @Get('/')
   @UseGuards(AuthGuard('jwt'))
   @UseFilters(UnauthorizedExceptionFilter)
-  findAll(
-    @Req() req: CustomRequest,
-    @Param('magazineId') magazineId: number
-  ): Promise<object> {
+  findAll(@Req() req: CustomRequest): Promise<object> {
     const userId: number = req.user.userId;
     return this.notificationSevice.findAll(userId);
   }
