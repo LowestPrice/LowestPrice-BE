@@ -2,9 +2,9 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { LikeMagazine, Magazine, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as AWS from 'aws-sdk';
-import { extname, resolve } from 'path';
+import { extname } from 'path';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
-import { Console } from 'console';
+
 import {
   AdminAccessDeniedException,
   NotFoundMagzineException,
@@ -63,31 +63,13 @@ export class MagazineService {
       },
     });
 
-    // 객체 펴주는 작업
-    const parseLikeMagazines: object[] =
-      this.parseLikeMagazinesModel(magazines);
-
-    // 사용자별 조회시 좋아요 설정 표시
-    const magazinesWithUserLikeStatus: object[] = await Promise.all(
-      parseLikeMagazines.map(async (magazine: Magazine) => {
-        let isLiked: object;
-        if (userId) {
-          // null이 아니고 사용자인 경우 진행
-          isLiked = await this.prisma.likeMagazine.findFirst({
-            where: {
-              UserId: userId,
-              MagazineId: magazine.magazineId,
-            },
-          });
-        }
-        return {
-          ...magazine,
-          isLiked: isLiked ? true : false,
-        };
-      })
+    // 객체 펴주고 좋아요 설정 여부 추가
+    const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
+      magazines,
+      userId
     );
 
-    return { data: magazinesWithUserLikeStatus };
+    return { data: parseLikeMagazines };
   }
 
   async findOne(magazineId: number, userId: number): Promise<object> {
@@ -114,26 +96,12 @@ export class MagazineService {
       throw new NotFoundMagzineException();
     }
 
-    const parseLikeMagazine: object = this.parseLikeMagazineModel(magazine);
+    const parseLikeMagazine: object = await this.parseLikeMagazineModel(
+      magazine,
+      userId
+    );
 
-    // 사용자별 조회시 좋아요 설정 표시
-    let isLiked: object = null;
-    if (userId) {
-      // null이 아니고 사용자인 경우 진행
-      isLiked = await this.prisma.likeMagazine.findFirst({
-        where: {
-          UserId: userId,
-          MagazineId: magazineId,
-        },
-      });
-    }
-
-    const magazineWithUserLikeStatus: object = {
-      ...parseLikeMagazine,
-      isLiked: isLiked ? true : false,
-    };
-
-    return { data: magazineWithUserLikeStatus };
+    return { data: parseLikeMagazine };
   }
 
   async update(
@@ -182,12 +150,11 @@ export class MagazineService {
   //* 해당 매거진 제외한 나머지 매거진 리스트 조회
   //! 해당 매거진 존재 여부 예외 처리 안함
   async exceptOne(magazineId: number, userId: number): Promise<object> {
-    this.checkAdmin(userId);
-
     const isExist: Object = await this.findOne(magazineId, userId);
     if (!isExist['data']) {
       throw new NotFoundMagzineException();
     }
+
     const magazines: Object[] | null = await this.prisma.magazine.findMany({
       where: {
         NOT: {
@@ -212,30 +179,12 @@ export class MagazineService {
       },
     });
 
-    const parseLikeMagazines: object[] =
-      this.parseLikeMagazinesModel(magazines);
-
-    // 사용자별 조회시 좋아요 설정 표시
-    const magazinesWithUserLikeStatus: object[] = await Promise.all(
-      parseLikeMagazines.map(async (magazine: Magazine) => {
-        let isLiked: object;
-        if (userId) {
-          // null이 아니고 사용자인 경우 진행
-          isLiked = await this.prisma.likeMagazine.findFirst({
-            where: {
-              UserId: userId,
-              MagazineId: magazine.magazineId,
-            },
-          });
-        }
-        return {
-          ...magazine,
-          isLiked: isLiked ? true : false,
-        };
-      })
+    const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
+      magazines,
+      userId
     );
 
-    return { data: magazinesWithUserLikeStatus };
+    return { data: parseLikeMagazines };
   }
 
   async setLike(userId: number, magazineId: number): Promise<object> {
@@ -304,30 +253,12 @@ export class MagazineService {
         },
       });
 
-    const parseLikeMagazines: object[] =
-      this.parseLikeMagazinesModel(LikeMagazines);
-
-    // 사용자별 조회시 좋아요 설정 표시
-    const magazinesWithUserLikeStatus: object[] = await Promise.all(
-      parseLikeMagazines.map(async (magazine: Magazine) => {
-        let isLiked: object;
-        if (userId) {
-          // null이 아니고 사용자인 경우 진행
-          isLiked = await this.prisma.likeMagazine.findFirst({
-            where: {
-              UserId: userId,
-              MagazineId: magazine.magazineId,
-            },
-          });
-        }
-        return {
-          ...magazine,
-          isLiked: isLiked ? true : false,
-        };
-      })
+    const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
+      LikeMagazines,
+      userId
     );
 
-    return { data: magazinesWithUserLikeStatus };
+    return { data: parseLikeMagazines };
   }
 
   //* 관리자 권한 확인
@@ -338,8 +269,8 @@ export class MagazineService {
   }
 
   //* 객체 한줄로 펴주기(배열)
-  parseLikeMagazinesModel(Magazines: object[]) {
-    return Magazines.map((Magazine) => {
+  async parseLikeMagazinesModel(Magazines: object[], userId: number) {
+    const parseLikeMagazines: object[] = Magazines.map((Magazine) => {
       let obj = {};
 
       // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
@@ -370,11 +301,33 @@ export class MagazineService {
       });
       return obj;
     });
+
+    // 사용자별 조회시 좋아요 설정 표시
+    const magazinesWithUserLikeStatus: object[] = await Promise.all(
+      parseLikeMagazines.map(async (magazine: Magazine) => {
+        let isLiked: object;
+        if (userId) {
+          // null이 아니고 사용자인 경우 진행
+          isLiked = await this.prisma.likeMagazine.findFirst({
+            where: {
+              UserId: userId,
+              MagazineId: magazine.magazineId,
+            },
+          });
+        }
+        return {
+          ...magazine,
+          isLiked: isLiked ? true : false,
+        };
+      })
+    );
+
+    return magazinesWithUserLikeStatus;
   }
 
   //* 객체 한줄로 펴주기(객체)
-  parseLikeMagazineModel(Magazine: object) {
-    let obj = {};
+  async parseLikeMagazineModel(Magazine: object, userId: number) {
+    let parseLikeMagazine = {};
 
     // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
     Object.entries(Magazine).forEach(([key, value]) => {
@@ -392,17 +345,35 @@ export class MagazineService {
           ) {
             // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
             Object.entries(subValue).forEach(([subKey1, subValue1]) => {
-              obj[subKey1] = subValue1;
+              parseLikeMagazine[subKey1] = subValue1;
             });
           } else {
-            obj[subKey] = subValue;
+            parseLikeMagazine[subKey] = subValue;
           }
         });
       } else {
-        obj[key] = value;
+        parseLikeMagazine[key] = value;
       }
     });
-    return obj;
+
+    // 사용자별 조회시 좋아요 설정 표시
+    let isLiked: object = null;
+    if (userId) {
+      // null이 아니고 사용자인 경우 진행
+      isLiked = await this.prisma.likeMagazine.findFirst({
+        where: {
+          UserId: userId,
+          MagazineId: parseLikeMagazine['magazineId'],
+        },
+      });
+    }
+
+    const magazineWithUserLikeStatus: object = {
+      ...parseLikeMagazine,
+      isLiked: isLiked ? true : false,
+    };
+
+    return magazineWithUserLikeStatus;
   }
 
   //! 파일 업로드 부분
