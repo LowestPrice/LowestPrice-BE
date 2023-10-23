@@ -13,11 +13,10 @@ export class MypageEntity {
   userId: number;
 
   @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  @IsOptional()
+  email?: string;
 
   @IsString()
-  @IsNotEmpty()
   nickname: string;
 
   @IsString()

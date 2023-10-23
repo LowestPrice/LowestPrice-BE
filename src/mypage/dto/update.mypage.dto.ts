@@ -1,8 +1,12 @@
 import { PickType } from '@nestjs/swagger';
 import { MypageEntity } from '../entities/mypage.entity';
 
-export class updateMypageDTO extends PickType(MypageEntity, [
-  'email',
+export class UpdateMypageDTO extends PickType(MypageEntity, [
   'nickname',
   'image',
 ]) {}
+
+// export class UpdateMypageDTO {
+//   nickname?: string;
+//   image?: string;
+// }

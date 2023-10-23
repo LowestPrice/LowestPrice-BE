@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { UpdateMypageDTO } from './dto/update.mypage.dto';
 
 @Injectable()
 export class MypageRepository {
@@ -12,7 +13,6 @@ export class MypageRepository {
         userId,
       },
       select: {
-        email: true,
         nickname: true,
         image: true,
       },
@@ -21,15 +21,20 @@ export class MypageRepository {
     return { data: user };
   }
 
-  //* 마이페이지 프로필 유저 확인
-
   //* 마이페이지 프로필 업데이트
-  async updateMypageProfile(userId: number, data: object) {
-    await this.prisma.user.update({
+  async updateMypageProfile(userId: number, updateMypageDTO: UpdateMypageDTO) {
+    const user = await this.prisma.user.update({
       where: {
-        userId,
+        userId: userId,
       },
-      data,
+      data: {
+        nickname: updateMypageDTO.nickname,
+        image: updateMypageDTO.image,
+      },
     });
+
+    console.log(user);
+
+    return { data: user };
   }
 }
