@@ -68,6 +68,8 @@ jobs:
           echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
           echo JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} >> .env
 
+          echo ADMIN=${{ secrets.ADMIN }} >> .env
+
       # S3로 업로드 할 프로젝트 압축 파일 생성
       - name: make .zip file
         run: zip -qq -r ./$GITHUB_SHA.zip .

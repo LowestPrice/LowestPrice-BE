@@ -11,12 +11,6 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
-  // @Get('/kakao')
-  // @UseGuards(AuthGuard('kakao'))
-  // kakaoLogin(): any {
-  //   // do nothing
-  // }
-
   //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
   @Get('/api/kakao/callback')
@@ -24,55 +18,37 @@ export class AuthController {
     @KakaoUser() kakaoUser: KakaoUserAfterAuth,
     @Res({ passthrough: true }) res
   ): Promise<void> {
-    //! service 단으로 이동해서 정리해야함
-
     //* db에 사용자가 있는지 확인
-    let isExistKaKaoUser = await this.authService.findKakaoUser(kakaoUser);
+    let isExistKaKaoUser = await this.authService.findKakaoUser(
+      kakaoUser.snsId
+    );
     if (!isExistKaKaoUser) {
       isExistKaKaoUser = await this.authService.createKakaoUser(kakaoUser);
     }
 
-    //* db에서 사용자 생성
-
     //* jwt 발급
     const jwtPayload = {
-      userId: isExistKaKaoUser.userId, //! userId로 보내는게 괜찮은가 보안상 문제
+      userId: isExistKaKaoUser.userId,
     };
 
     const accessToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: '5m',
+      expiresIn: '5h',
       secret: process.env.JWT_SECRET,
     });
 
-    const refreshToken = this.jwtService.sign(jwtPayload, {
-      expiresIn: '7d',
-      secret: process.env.JWT_REFRESH_SECRET,
-    });
+    console.log(`jwt-accessToken: ${accessToken}`);
 
-    await this.authService.saveRefresh(isExistKaKaoUser.userId, refreshToken);
+    //*! 기존의 쿠키 방식
+    //res.setHeader('Authorization', `Bearer ${accessToken}`);
+    //res.cookie('Authorization', `Bearer ${accessToken}`, {
+    //  httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+    //  sameSite: 'none',
+    //  secure: true,
+    //  maxAge: 36000000, // 쿠키 만료 시간 설정 (예: 1시간)
+    //});
 
-    //*! 프론트랑 연결 될 수 있게 옵션 설정 잘 해줘야함
-    // res.setHeader('Authorization', `Bearer ${accessToken}`);
-    res.cookie('Authorization', `Bearer ${accessToken}`, {
-      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-      //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
-      //sameSite: 'none',
-      sameSite: 'lax',
-      secure: false,
-      maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
-    });
-
-    // res.cookie('refreshToken', refreshToken, {
-    //   httpOnly: true, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-    //   //secure: process.env.NODE_ENV !== 'development', // HTTPS에서만 쿠키 전송
-    //   sameSite: 'none',
-    //   secure: false,
-    //   maxAge: 3600000, // 쿠키 만료 시간 설정 (예: 1시간)
-    // });
-
-    // 프론트 url
-    //! 리다이렉트해야 쿠키가 넘어갑니다!
-    res.redirect(`${process.env.CLIENT_URL}`);
-    // res.json({ message: '로그인에 성공했습니다.' });
+    const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}`;
+    console.log(redirect_url); // 백엔드에서 확인
+    res.redirect(redirect_url);
   }
 }

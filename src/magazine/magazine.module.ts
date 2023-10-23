@@ -5,6 +5,7 @@ import { MagazineService } from './magazine.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
