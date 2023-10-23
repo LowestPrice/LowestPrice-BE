@@ -19,6 +19,8 @@ import { UpdateMagazineDto } from './dto/update.magazine.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { UnauthorizedExceptionFilter } from 'src/auth/util/decorator/not-user.decorator';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from 'src/auth/option-jwt-auth.guard';
 
 interface CustomRequest extends Request {
   user: {
@@ -48,12 +50,18 @@ export class MagazineController {
 
   //* 매거진 조회
   @Get()
-  findAll() {
-    return this.magazineService.findAll();
+  @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
+  findAll(@Req() req: CustomRequest) {
+    let userId = null;
+    // 인증된 사용자인 경우 userId를 설정
+    if (req.user) {
+      userId = req.user.userId;
+    }
+    console.log(`전체 조회 접근 사용자 : ${userId}`);
+    return this.magazineService.findAll(userId);
   }
 
   //! 라우팅 경로 문제로 코드 위로 올림
-  //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
   //* 좋아요 조회
   @Get('/like')
   @UseGuards(AuthGuard('jwt'))
@@ -67,8 +75,9 @@ export class MagazineController {
   @Get('/:magazineId')
   @UseGuards(AuthGuard('jwt'))
   @UseFilters(UnauthorizedExceptionFilter)
-  findOne(@Param('magazineId') magazineId: number) {
-    return this.magazineService.findOne(magazineId);
+  findOne(@Req() req: CustomRequest, @Param('magazineId') magazineId: number) {
+    const userId: number = req.user.userId;
+    return this.magazineService.findOne(magazineId, userId);
   }
 
   //* 매거진 수정
@@ -103,8 +112,17 @@ export class MagazineController {
 
   //* 현재 매거진 제외한 나머지 매거진 리스트
   @Get('/:magazineId/list')
-  excludeOne(@Param('magazineId') magazineId: number) {
-    return this.magazineService.excludeOne(magazineId);
+  @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
+  excludeOne(
+    @Req() req: CustomRequest,
+    @Param('magazineId') magazineId: number
+  ) {
+    let userId = null;
+    // 인증된 사용자인 경우 userId를 설정
+    if (req.user) {
+      userId = req.user.userId;
+    }
+    return this.magazineService.exceptOne(magazineId, userId);
   }
 
   //! 로그인 jwt 구현되면 /user/:userId 경로는 삭제(2023.10.10.화)
@@ -112,11 +130,8 @@ export class MagazineController {
   @Post('/:magazineId/like')
   @UseGuards(AuthGuard('jwt'))
   @UseFilters(UnauthorizedExceptionFilter)
-  setLike(
-    @Req() req: CustomRequest,
-    @Param('magazineId') magazineId: number,
-  ) {
+  setLike(@Req() req: CustomRequest, @Param('magazineId') magazineId: number) {
     const userId: number = req.user.userId;
-    return this.magazineService.setLike(magazineId, userId);
+    return this.magazineService.setLike(userId, magazineId);
   }
 }
