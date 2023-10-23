@@ -69,8 +69,7 @@ export class MypageService {
     file: Express.Multer.File,
     data: UpdateMypageDTO
   ) {
-    //! 업데이트 사항이 없을때 에러처리
-    if (Object.keys(data).length === 0) {
+    if(!file && (!data || !data.nickname && !data.image)) {
       throw new NoUpdateProfileException();
     }
 
