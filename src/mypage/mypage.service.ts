@@ -76,7 +76,7 @@ export class MypageService {
     // 파일 업로드 사항 업데이트
     if (file) {
       const uploadObject = await this.uploadFile(file);
-      data.image = uploadObject.Location;
+      data.image = (await uploadObject).Location;
     }
     const user = await this.mypageRepository.updateMypageProfile(userId, data);
 
