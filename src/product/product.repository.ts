@@ -11,7 +11,7 @@ export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   //* 상품 전체 조회
-  async getAllProducts() {
+  async getAllProducts(userId: number) {
     const products = await this.prisma.product.findMany({
       select: {
         productId: true,
@@ -256,11 +256,6 @@ export class ProductRepository {
             },
           },
         },
-        UserProduct: {
-          where: {
-            UserId: userId,
-          },
-        },
       },
     });
 
@@ -272,7 +267,7 @@ export class ProductRepository {
   }
 
   //* 상품 상세 조회
-  async getProductDetail(productId: number) {
+  async getProductDetail(productId: number, userId: number) {
     const product = await this.prisma.product.findUnique({
       where: { productId },
       select: {

@@ -25,8 +25,11 @@ export class ProductController {
 
   //* 상품 전체 조회
   @Get()
-  getAllProducts(): Promise<object> {
-    return this.productService.getAllProducts();
+  @UseGuards(OptionalJwtAuthGuard)
+  getAllProducts(@Req() req: CustomRequest): Promise<object> {
+    const userId: number = req.user ? req.user.userId : null;
+
+    return this.productService.getAllProducts(userId);
   }
 
   //* 상품 상위10개 조회
@@ -56,7 +59,7 @@ export class ProductController {
     @Param('filter') filter: string,
     @Req() req: CustomRequest
   ): Promise<object> {
-    const userId: number = req.user.userId;
+    const userId: number = req.user ? req.user.userId : null;
     return this.productService.getProductsByCategoryAndFilter(
       categoryName,
       filter,
@@ -66,10 +69,14 @@ export class ProductController {
 
   //* 상품 상세 조회
   @Get(':productId')
+  @UseGuards(OptionalJwtAuthGuard)
   async getProductDetail(
-    @Param('productId', ParseIntPipe) productId: number
+    @Param('productId', ParseIntPipe) productId: number,
+    @Req() req: CustomRequest
   ): Promise<object> {
-    const result = await this.productService.getProductDetail(productId);
+    const userId: number = req.user ? req.user.userId : null;
+
+    const result = await this.productService.getProductDetail(productId, userId);
 
     return result;
   }

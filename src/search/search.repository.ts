@@ -130,4 +130,14 @@ export class SearchRepository {
 
     return products;
   }
+
+  //* 상품 알림 존재 여부 확인 함수
+  async checkNotification(productId: number, userId: number) {
+    return await this.prisma.userProduct.findFirst({
+      where: {
+        UserId: userId,
+        ProductId: productId,
+      },
+    });
+  }
 }
