@@ -43,7 +43,7 @@ export class ProductRepository {
   }
 
   //* 상품 상위10개 조회
-  async getTop10Products() {
+  async getTop10Products(userId: number) {
     const products = await this.prisma.product.findMany({
       where: {
         AND: [
@@ -314,5 +314,5 @@ export class ProductRepository {
         ProductId: productId,
       },
     });
-  }  
+  }
 }

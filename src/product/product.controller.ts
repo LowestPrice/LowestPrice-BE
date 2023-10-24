@@ -34,8 +34,11 @@ export class ProductController {
 
   //* 상품 상위10개 조회
   @Get('top')
-  async getTopDiscountedProducts(): Promise<object> {
-    return this.productService.getTop10Products();
+  @UseGuards(OptionalJwtAuthGuard)
+  async getTopDiscountedProducts(@Req() req: CustomRequest): Promise<object> {
+    const userId: number = req.user ? req.user.userId : null;
+
+    return this.productService.getTop10Products(userId);
   }
 
   //* 상품 카테고리별 조회

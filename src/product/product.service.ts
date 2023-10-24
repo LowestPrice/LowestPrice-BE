@@ -29,10 +29,24 @@ export class ProductService {
   }
 
   //* 상품 상위10개 조회
-  async getTop10Products() {
-    const products = await this.productRepository.getTop10Products();
+  async getTop10Products(userId: number) {
+    const products = await this.productRepository.getTop10Products(userId);
 
-    const parseProducts = this.parseProductsModel(products);
+    // 상품 알림 여부 확인
+    // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
+    const addAlertProducts = await Promise.all(
+      //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
+      products.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // 상품 알림 여부를 추가한 배열을 객체로 변환
+    const parseProducts = this.parseProductsModel(addAlertProducts);
 
     return { data: parseProducts };
   }
