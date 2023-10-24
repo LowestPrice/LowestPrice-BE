@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Product, UserProduct } from '@prisma/client';
+import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -22,10 +23,7 @@ export class NotificationService {
     const isExist: Promise<Product> | null = this.findProduct(productId);
 
     if (!isExist) {
-      throw new HttpException(
-        '해당 제품이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundProductException();
     }
 
     // 1. '알림' 여부 확인
@@ -86,14 +84,20 @@ export class NotificationService {
       },
     });
 
-    const parseProducts = this.parseProductsModel(products);
+    const parseProducts: object[] = await this.parseProductsModel(
+      products,
+      userId
+    );
 
     return { data: parseProducts };
   }
 
   //* 객체 한줄로 펴주기(배열)
-  parseProductsModel(products: object[]): object {
-    return products.map((product) => {
+  async parseProductsModel(
+    products: object[],
+    userId: number
+  ): Promise<object[]> {
+    const parseProducts = products.map((product) => {
       let obj = {};
 
       // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
@@ -117,5 +121,25 @@ export class NotificationService {
       });
       return obj;
     });
+
+    const userNotificationStatus: object[] = await Promise.all(
+      parseProducts.map(async (product: Product) => {
+        let isAlertOn: object;
+        if (userId) {
+          // null이 아니고 사용자인 경우 진행
+          isAlertOn = await this.prisma.userProduct.findFirst({
+            where: {
+              UserId: userId,
+              ProductId: product.productId,
+            },
+          });
+        }
+        return {
+          ...product,
+          isAlertOn: isAlertOn ? true : false,
+        };
+      })
+    );
+    return userNotificationStatus;
   }
 }

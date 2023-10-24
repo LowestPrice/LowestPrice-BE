@@ -1,12 +1,17 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
+import {
+  NotFoundCategoryException,
+  NotFoundCategoryFilterException,
+  NotFoundProductException,
+} from 'src/common/exceptions/custom-exception';
 
 @Injectable()
 export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   //* 상품 전체 조회
-  async getAllProducts() {
+  async getAllProducts(userId: number) {
     const products = await this.prisma.product.findMany({
       select: {
         productId: true,
@@ -33,11 +38,12 @@ export class ProductRepository {
         },
       },
     });
+
     return products;
   }
 
   //* 상품 상위10개 조회
-  async getTop10Products() {
+  async getTop10Products(userId: number) {
     const products = await this.prisma.product.findMany({
       where: {
         AND: [
@@ -85,11 +91,24 @@ export class ProductRepository {
         },
       },
     });
+
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
     return products;
   }
 
   //* 상품 카테고리별 조회
-  async getProductsByCategory(categoryName: string) {
+  async getProductsByCategory(categoryName: string, userId: number) {
+    const categoryExists = await this.prisma.category.findUnique({
+      where: { categoryName: categoryName },
+    });
+
+    if (!categoryExists) {
+      throw new NotFoundCategoryException();
+    }
+
     const products = await this.prisma.product.findMany({
       where: {
         ProductCategory: {
@@ -125,11 +144,50 @@ export class ProductRepository {
         },
       },
     });
+
+    // 해당카테고리에 제품이 없으면 Not Found 예외처리
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
+    // // 각 상품의 알림 상태를 확인하고 추가
+    // const productsWithNotificationStatus: object[] = await Promise.all(
+    //   products.map(async (product) => {
+    //     let isAlertOn = false;
+    //     if (userId) {
+    //       const notification = await this.prisma.userProduct.findFirst({
+    //         where: {
+    //           UserId: userId,
+    //           ProductId: product.productId,
+    //         },
+    //       });
+    //       if (notification) isAlertOn = true;
+    //     }
+    //     return {
+    //       ...product,
+    //       isAlertOn: isAlertOn,
+    //     };
+    //   })
+    // );
+
+    // return productsWithNotificationStatus;
     return products;
   }
 
   //* 상품 카테고리별 필터기능 조회
-  async getProductsByCategoryAndFilter(categoryName: string, filter: string) {
+  async getProductsByCategoryAndFilter(
+    categoryName: string,
+    filter: string,
+    userId: number
+  ) {
+    const categoryExists = await this.prisma.category.findUnique({
+      where: { categoryName: categoryName },
+    });
+
+    if (!categoryExists) {
+      throw new NotFoundCategoryException();
+    }
+
     let orderBy = {};
 
     switch (filter) {
@@ -149,7 +207,7 @@ export class ProductRepository {
         };
         break;
       default:
-        throw new HttpException('잘못된 요청입니다.', 400);
+        throw new NotFoundCategoryFilterException();
     }
 
     const products = await this.prisma.product.findMany({
@@ -162,11 +220,6 @@ export class ProductRepository {
                   categoryName,
                 },
               },
-            },
-          },
-          {
-            NOT: {
-              discountRate: 0, // 할인이 없는 상품은 제외
             },
           },
           {
@@ -205,11 +258,16 @@ export class ProductRepository {
         },
       },
     });
+
+    if (products.length === 0) {
+      throw new NotFoundProductException();
+    }
+
     return products;
   }
 
   //* 상품 상세 조회
-  async getProductDetail(productId: number) {
+  async getProductDetail(productId: number, userId: number) {
     const product = await this.prisma.product.findUnique({
       where: { productId },
       select: {
@@ -241,6 +299,20 @@ export class ProductRepository {
       },
     });
 
+    if (!product) {
+      throw new NotFoundProductException();
+    }
+
     return product;
+  }
+
+  //* 상품 알림 존재 여부 확인 함수
+  async checkNotification(productId: number, userId: number) {
+    return await this.prisma.userProduct.findFirst({
+      where: {
+        UserId: userId,
+        ProductId: productId,
+      },
+    });
   }
 }

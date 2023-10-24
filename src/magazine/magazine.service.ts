@@ -2,11 +2,16 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { LikeMagazine, Magazine, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as AWS from 'aws-sdk';
-import { extname, resolve } from 'path';
+import { extname } from 'path';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
-import { Console } from 'console';
+
+import {
+  AdminAccessDeniedException,
+  NotFoundMagzineException,
+} from 'src/common/exceptions/custom-exception';
 @Injectable()
 export class MagazineService {
+  // s3 설정
   private readonly s3: AWS.S3;
   constructor(private readonly prisma: PrismaService) {
     AWS.config.update({
@@ -18,32 +23,27 @@ export class MagazineService {
     });
     this.s3 = new AWS.S3();
   }
-  // Todo: 매거진 상세조회, 수정, 삭제 시 매거진 존재하는지 확인하는 로직 추가
 
   async create(
+    userId: number,
     file: Express.Multer.File,
     data: Prisma.MagazineCreateInput
   ): Promise<object> {
-    try {
-      if (file) {
-        const uploadObject = this.uploadFile(file);
-        data.mainImage = (await uploadObject).Location;
-      }
+    this.checkAdmin(userId);
 
-      const magazine: Magazine | null = await this.prisma.magazine.create({
-        data,
-      });
-
-      return { message: '매거진 등록에 성공했습니다.' };
-    } catch (err) {
-      throw new HttpException(
-        '서버 내부 에러가 발생했습니다.',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
+    if (file) {
+      const uploadObject = this.uploadFile(file);
+      data.mainImage = (await uploadObject).Location;
     }
+
+    const magazine: Magazine | null = await this.prisma.magazine.create({
+      data,
+    });
+
+    return { message: '매거진 등록에 성공했습니다.' };
   }
 
-  async findAll(): Promise<object> {
+  async findAll(userId: number | null): Promise<object> {
     const magazines: Object[] | null = await this.prisma.magazine.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -63,16 +63,19 @@ export class MagazineService {
       },
     });
 
-    const parseLikeMagazines: object[] =
-      this.parseLikeMagazinesModel(magazines);
+    // 객체 펴주고 좋아요 설정 여부 추가
+    const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
+      magazines,
+      userId
+    );
 
     return { data: parseLikeMagazines };
   }
 
-  async findOne(id: number): Promise<object> {
+  async findOne(magazineId: number, userId: number): Promise<object> {
     const magazine: Object | null = await this.prisma.magazine.findUnique({
       where: {
-        magazineId: id,
+        magazineId: magazineId,
       },
       select: {
         magazineId: true,
@@ -89,21 +92,29 @@ export class MagazineService {
       },
     });
 
-    const parseLikeMagazine: object = this.parseLikeMagazineModel(magazine);
+    if (!magazine) {
+      throw new NotFoundMagzineException();
+    }
+
+    const parseLikeMagazine: object = await this.parseLikeMagazineModel(
+      magazine,
+      userId
+    );
+
     return { data: parseLikeMagazine };
   }
 
   async update(
-    id: number,
+    userId: number,
+    magazineId: number,
     file: Express.Multer.File,
     data: Prisma.MagazineUpdateInput
   ): Promise<object> {
-    const isExist: Object = await this.findOne(id);
+    this.checkAdmin(userId);
+
+    const isExist: Object = await this.findOne(magazineId, userId);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     if (file) {
@@ -113,25 +124,24 @@ export class MagazineService {
 
     const magazine: Magazine | null = await this.prisma.magazine.update({
       where: {
-        magazineId: id,
+        magazineId: magazineId,
       },
       data: data,
     });
     return { message: '매거진 수정에 성공했습니다.' };
   }
 
-  async remove(id: number): Promise<object> {
-    const isExist: Object = await this.findOne(id);
+  async remove(userId: number, magazineId: number): Promise<object> {
+    this.checkAdmin(userId);
+
+    const isExist: Object = await this.findOne(magazineId, userId);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     const magazine: Magazine | null = await this.prisma.magazine.delete({
       where: {
-        magazineId: id,
+        magazineId: magazineId,
       },
     });
     return { message: '매거진 삭제에 성공했습니다.' };
@@ -139,11 +149,16 @@ export class MagazineService {
 
   //* 해당 매거진 제외한 나머지 매거진 리스트 조회
   //! 해당 매거진 존재 여부 예외 처리 안함
-  async excludeOne(id: number): Promise<object> {
+  async exceptOne(magazineId: number, userId: number): Promise<object> {
+    const isExist: Object = await this.findOne(magazineId, userId);
+    if (!isExist['data']) {
+      throw new NotFoundMagzineException();
+    }
+
     const magazines: Object[] | null = await this.prisma.magazine.findMany({
       where: {
         NOT: {
-          magazineId: id,
+          magazineId: magazineId,
         },
       },
       orderBy: {
@@ -164,18 +179,19 @@ export class MagazineService {
       },
     });
 
-    console.log(magazines);
-    return magazines;
+    const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
+      magazines,
+      userId
+    );
+
+    return { data: parseLikeMagazines };
   }
 
-  async setLike(magazineId: number, userId: number): Promise<object> {
+  async setLike(userId: number, magazineId: number): Promise<object> {
     //* 0. 매거진 존재 여부 확인
-    const isExist: Object = await this.findOne(magazineId);
+    const isExist: Object = await this.findOne(magazineId, userId);
     if (!isExist['data']) {
-      throw new HttpException(
-        '해당 매거진이 존재하지 않습니다.',
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundMagzineException();
     }
 
     //* 1. '좋아요' 여부 확인
@@ -237,23 +253,40 @@ export class MagazineService {
         },
       });
 
-    const parseLikeMagazines: object[] =
-      this.parseLikeMagazinesModel(LikeMagazines);
+    const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
+      LikeMagazines,
+      userId
+    );
 
     return { data: parseLikeMagazines };
   }
 
+  //* 관리자 권한 확인
+  checkAdmin(userId: number): void {
+    if (userId !== Number(process.env.ADMIN)) {
+      throw new AdminAccessDeniedException();
+    }
+  }
+
   //* 객체 한줄로 펴주기(배열)
-  parseLikeMagazinesModel(Magazines: object[]) {
-    return Magazines.map((Magazine) => {
+  async parseLikeMagazinesModel(Magazines: object[], userId: number) {
+    const parseLikeMagazines: object[] = Magazines.map((Magazine) => {
       let obj = {};
 
       // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
       Object.entries(Magazine).forEach(([key, value]) => {
-        if (typeof value === 'object' && !(value instanceof Date)) {
+        if (
+          typeof value === 'object' &&
+          !(value instanceof Date) &&
+          value !== null
+        ) {
           // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
           Object.entries(value).forEach(([subKey, subValue]) => {
-            if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+            if (
+              typeof subValue === 'object' &&
+              !(subValue instanceof Date) &&
+              subValue !== null //? null 값일 때 처리 부분
+            ) {
               // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
               Object.entries(subValue).forEach(([subKey1, subValue1]) => {
                 obj[subKey1] = subValue1;
@@ -268,37 +301,84 @@ export class MagazineService {
       });
       return obj;
     });
+
+    // 사용자별 조회시 좋아요 설정 표시
+    const magazinesWithUserLikeStatus: object[] = await Promise.all(
+      parseLikeMagazines.map(async (magazine: Magazine) => {
+        let isLiked: object;
+        if (userId) {
+          // null이 아니고 사용자인 경우 진행
+          isLiked = await this.prisma.likeMagazine.findFirst({
+            where: {
+              UserId: userId,
+              MagazineId: magazine.magazineId,
+            },
+          });
+        }
+        return {
+          ...magazine,
+          isLiked: isLiked ? true : false,
+        };
+      })
+    );
+
+    return magazinesWithUserLikeStatus;
   }
 
   //* 객체 한줄로 펴주기(객체)
-  parseLikeMagazineModel(Magazine: object) {
-    let obj = {};
+  async parseLikeMagazineModel(Magazine: object, userId: number) {
+    let parseLikeMagazine = {};
 
     // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
     Object.entries(Magazine).forEach(([key, value]) => {
-      if (typeof value === 'object' && !(value instanceof Date)) {
+      if (
+        typeof value === 'object' &&
+        !(value instanceof Date) &&
+        value !== null
+      ) {
         // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
         Object.entries(value).forEach(([subKey, subValue]) => {
-          if (typeof subValue === 'object' && !(subValue instanceof Date)) {
+          if (
+            typeof subValue === 'object' &&
+            !(subValue instanceof Date) &&
+            subValue !== null
+          ) {
             // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
             Object.entries(subValue).forEach(([subKey1, subValue1]) => {
-              obj[subKey1] = subValue1;
+              parseLikeMagazine[subKey1] = subValue1;
             });
           } else {
-            obj[subKey] = subValue;
+            parseLikeMagazine[subKey] = subValue;
           }
         });
       } else {
-        obj[key] = value;
+        parseLikeMagazine[key] = value;
       }
     });
-    return obj;
+
+    // 사용자별 조회시 좋아요 설정 표시
+    let isLiked: object = null;
+    if (userId) {
+      // null이 아니고 사용자인 경우 진행
+      isLiked = await this.prisma.likeMagazine.findFirst({
+        where: {
+          UserId: userId,
+          MagazineId: parseLikeMagazine['magazineId'],
+        },
+      });
+    }
+
+    const magazineWithUserLikeStatus: object = {
+      ...parseLikeMagazine,
+      isLiked: isLiked ? true : false,
+    };
+
+    return magazineWithUserLikeStatus;
   }
 
   //! 파일 업로드 부분
   async uploadFile(file: Express.Multer.File): Promise<ManagedUpload.SendData> {
-    console.log(`진입`);
-    const key = `${Date.now()}${extname(file.originalname)}`;
+    const key = `magazine-images/${Date.now()}${extname(file.originalname)}`;
     const params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       // ACL: 'public-read',
@@ -316,24 +396,3 @@ export class MagazineService {
     return uploadObject;
   }
 }
-
-// const magazines: Array<Object> = await this.prisma.magazine.findMany({
-//   where: {
-//     NOT: {
-//       magazineId: id,
-//     },
-//   },
-//   select: {
-//     magazineId: true,
-//     title: true,
-//     content: true,
-//     mainImage: true,
-//     createdAt: true,
-//     updatedAt: true,
-//     _count: {
-//       select: {
-//         LikeMagazine: true,
-//       },
-//     },
-//   },
-// });
