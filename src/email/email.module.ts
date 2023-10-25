@@ -20,7 +20,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
           },
         },
         defaults: {
-          from: `"내일의 최저가" <${process.env.EMAILADDRESS}>`,
+          from: `"내일은 최저가" <${process.env.EMAILADDRESS}>`,
         },
       }),
     }),

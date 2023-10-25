@@ -14,7 +14,7 @@ export class EmailRepository {
     await this.mailerService
       .sendMail({
         to: list.email, // 누구에게
-        subject: '오늘의 최저가 알림', // 제목
+        subject: '내일은 최저가 알림', // 제목
         text: `[${list.productName}] 상품의 가격이 ${list.atPrice}(원) 에서 ${list.currentPrice}(원) 으로 현재 최저가 입니다.`, // 내용
       })
       .then((res) => {
