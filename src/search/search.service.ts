@@ -64,33 +64,93 @@ export class SearchService {
   }
 
   //* 상품 검색
-  async searchProduct(search: string) {
+  async searchProduct(search: string, userId: number, isOutOfStock: string) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
     // 변환된 검색어
     const transformedSearch = this.transformSearch(search);
 
-    const products =
-      await this.searchRepository.searchProduct(transformedSearch);
+    const products = await this.searchRepository.searchProduct(
+      transformedSearch,
+      userId,
+      isOutOfStockBoolean
+    );
 
-    const parseProducts = this.parseProductsModel(products);
+    const addAlertProducts = await Promise.all(
+      //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
+      products.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // 상품 알림 여부를 추가한 배열을 객체로 변환
+    const parseProducts = this.parseProductsModel(addAlertProducts);
 
     return { data: parseProducts };
   }
 
   //* 상품 검색 필터기능
-  async searchProductByFilter(search: string, filter: string) {
+  async searchProductByFilter(
+    search: string,
+    filter: string,
+    userId: number,
+    isOutOfStock: string
+  ) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
     // 변환된 검색어
     const transformedSearch = this.transformSearch(search);
 
     const products = await this.searchRepository.searchProductByFilter(
       transformedSearch,
-      filter
+      filter,
+      isOutOfStockBoolean
     );
 
-    const parseProducts = this.parseProductsModel(products);
+    const addAlertProducts = await Promise.all(
+      //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
+      products.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // 상품 알림 여부를 추가한 배열을 객체로 변환
+    const parseProducts = this.parseProductsModel(addAlertProducts);
 
     return { data: parseProducts };
   }
 
+  //* 상품 알림 등록 함수
+  private async checkAlertStatus(
+    product: any,
+    userId: number
+  ): Promise<boolean> {
+    // 사용자가 로그인하지 않은 경우
+    if (!userId) return false;
+
+    // 사용자가 로그인한 경우
+    const notification = await this.searchRepository.checkNotification(
+      product.productId,
+      userId
+    );
+
+    //checkNotification()의 결과가 있으면 true 반환, null인 경우 false 반환
+    return Boolean(notification);
+  }
+
+  //* 객체 한줄로 펴주기(배열)
   private parseProductsModel(products: object[]): object {
     return products.map((product) => {
       let obj = {};
