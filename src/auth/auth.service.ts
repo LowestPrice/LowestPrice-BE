@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { KakaoUserAfterAuth } from './util/decorator/user.decorator';
+import { AuthRepository } from './auth.repository';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authRepository: AuthRepository
+  ) {}
 
   async findUser(id: number) {
     return await this.prisma.user.findFirst({
@@ -44,4 +48,6 @@ export class AuthService {
       },
     });
   }
+
+  async kakaoWithDrawal(userId: number) {}
 }

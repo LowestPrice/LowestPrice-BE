@@ -3,13 +3,27 @@ import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { KakaoUser, KakaoUserAfterAuth } from './util/decorator/user.decorator';
-
+import { JwtAuthGuard } from './jwt-auth.guard';
+//! 파일로 분리
+interface CustomRequest extends Request {
+  user: {
+    userId: number;
+  };
+}
 @Controller('')
 export class AuthController {
   constructor(
     private readonly jwtService: JwtService,
     private readonly authService: AuthService
   ) {}
+
+  //* 회원탈퇴
+  @Get('/kakao/withdrawal')
+  @UseGuards(JwtAuthGuard)
+  async kakaoWithDrawal(@Req() req: CustomRequest) {
+    const userId: number = req.user.userId;
+    return this.authService.kakaoWithDrawal(userId);
+  }
 
   //! callback url로 지정
   @UseGuards(AuthGuard('kakao'))
