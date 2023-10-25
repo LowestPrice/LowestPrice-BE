@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,7 +18,7 @@ export class AuthController {
   ) {}
 
   //* 회원탈퇴
-  @Get('/kakao/deactivate')
+  @Delete('/kakao/deactivate')
   @UseGuards(JwtAuthGuard)
   async kakaoDeactivate(@Req() req: CustomRequest) {
     const userId: number = req.user.userId;
