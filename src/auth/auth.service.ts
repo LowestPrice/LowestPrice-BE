@@ -5,49 +5,35 @@ import { AuthRepository } from './auth.repository';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly authRepository: AuthRepository
-  ) {}
+  constructor(private readonly authRepository: AuthRepository) {}
 
+  //* jwt 로그인 확인
   async findUser(id: number) {
-    return await this.prisma.user.findFirst({
-      where: {
-        userId: id,
-      },
-    });
+    return this.findUser(id);
   }
 
+  //* 카카오 회원가입 유저 확인
   async findKakaoUser(snsId: string) {
-    return await this.prisma.user.findFirst({
-      where: {
-        snsId: snsId,
-      },
-    });
+    return this.authRepository.findKakaoUser(snsId);
   }
 
+  //* 카카오 로그인 계정 생성
   async createKakaoUser(user: KakaoUserAfterAuth) {
-    return await this.prisma.user.create({
-      data: {
-        email: user.email,
-        nickname: user.nickname,
-        snsId: user.snsId,
-        provider: user.provider,
-        image: user.image,
-      },
-    });
+    return this.authRepository.createKakaoUser(user);
   }
 
-  async saveRefresh(userId: number, refreshToken: string) {
-    return await this.prisma.user.update({
-      where: {
-        userId: userId,
-      },
-      data: {
-        refreshToken: refreshToken,
-      },
-    });
+  //* refresh 토큰 저장
+  saveRefresh(userId: number, refreshToken: string) {
+    return this.authRepository.saveRefresh(userId, refreshToken);
   }
 
-  async kakaoWithDrawal(userId: number) {}
+  //* 회원 탈퇴
+  kakaoWithDrawal(userId: number) {
+    this.authRepository.kakaoWithDrawal(userId);
+    return {
+      success: 'success',
+      status: 200,
+      message: '회원 탈퇴에 성공했습니다.',
+    };
+  }
 }
