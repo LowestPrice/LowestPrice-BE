@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
@@ -40,4 +40,8 @@ export class AuthController {
     //* 2. 프론트로 redirect
     res.redirect(redirect_url);
   }
+
+  //* refresh 토큰 - 액세스토큰 재발급
+  
+  
 }

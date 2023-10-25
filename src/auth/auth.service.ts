@@ -38,7 +38,18 @@ export class AuthService {
       secret: process.env.JWT_SECRET,
     });
 
+    // 3-1. refresh 토큰 발급
+    const refreshToken = this.jwtService.sign(jwtPayload, {
+      // 리프레시 토큰 유효기간을 길게 설정하고 액세스 토큰이 만료되면 리프레시 토큰을 사용해 액세스 토큰을 재발급하는 방식
+      expiresIn: '7d',
+      secret: process.env.JWT_SECRET,
+    });
+
+    // 4. refresh 토큰 DB에 저장
+    await this.authRepository.saveRefresh(isExistKaKaoUser.userId, refreshToken);
+
     console.log(`jwt-accessToken: ${accessToken}`);
+    console.log(`jwt-refreshToken: ${refreshToken}`);
 
     //*! 기존의 쿠키 방식
     //res.setHeader('Authorization', `Bearer ${accessToken}`);
@@ -48,7 +59,7 @@ export class AuthService {
     //  secure: true,
     //  maxAge: 36000000, // 쿠키 만료 시간 설정 (예: 1시간)
     //});
-    return accessToken;
+    return { accessToken, refreshToken };
   }
 
   //* 회원 탈퇴
