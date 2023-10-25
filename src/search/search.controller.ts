@@ -31,10 +31,16 @@ export class SearchController {
   async searchProductsByFilter(
     @Query('search') search: string,
     @Param('filter') filter: string,
+    @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
 
-    return this.searchService.searchProductByFilter(search, filter, userId);
+    return this.searchService.searchProductByFilter(
+      search,
+      filter,
+      userId,
+      isOutOfStock
+    );
   }
 }
