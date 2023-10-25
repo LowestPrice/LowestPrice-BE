@@ -50,7 +50,7 @@ export class AuthRepository {
   }
 
   //* 회원탈퇴
-  async kakaoWithDrawal(userId: number) {
+  async kakaoDeactivate(userId: number) {
     return await this.prisma.user.delete({
       where: {
         userId: userId,
