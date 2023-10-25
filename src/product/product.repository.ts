@@ -11,8 +11,21 @@ export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   //* 상품 전체 조회
-  async getAllProducts(userId: number) {
+  async getAllProducts(userId: number, isOutOfStock: boolean) {
+    // 조건에 따라 whereCondition 객체에 추가
+    // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
+    type WhereConditionType = {
+      isOutOfStock?: boolean;
+    };
+    let whereCondition: WhereConditionType = {};
+
+    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)
+    if (isOutOfStock === false) {
+      whereCondition.isOutOfStock = false;
+    }
+
     const products = await this.prisma.product.findMany({
+      where: whereCondition,
       select: {
         productId: true,
         coupangItemId: true,
@@ -100,7 +113,11 @@ export class ProductRepository {
   }
 
   //* 상품 카테고리별 조회
-  async getProductsByCategory(categoryName: string, userId: number) {
+  async getProductsByCategory(
+    categoryName: string,
+    userId: number,
+    isOutOfStock: boolean
+  ) {
     const categoryExists = await this.prisma.category.findUnique({
       where: { categoryName: categoryName },
     });
@@ -109,16 +126,31 @@ export class ProductRepository {
       throw new NotFoundCategoryException();
     }
 
-    const products = await this.prisma.product.findMany({
-      where: {
-        ProductCategory: {
-          some: {
-            Category: {
-              categoryName,
-            },
+    const baseCondition = {
+      ProductCategory: {
+        some: {
+          Category: {
+            categoryName,
           },
         },
       },
+      NOT: {
+        discountRate: null, // null 값인 상품은 제외
+      },
+    };
+
+    const additionalCondition = [];
+
+    if (isOutOfStock === false) {
+      additionalCondition.push({ isOutOfStock: false });
+    }
+
+    const whereCondition = {
+      AND: [baseCondition, ...additionalCondition],
+    };
+
+    const products = await this.prisma.product.findMany({
+      where: whereCondition,
       select: {
         productId: true,
         coupangItemId: true,
@@ -178,7 +210,8 @@ export class ProductRepository {
   async getProductsByCategoryAndFilter(
     categoryName: string,
     filter: string,
-    userId: number
+    userId: number,
+    isOutOfStock: boolean
   ) {
     const categoryExists = await this.prisma.category.findUnique({
       where: { categoryName: categoryName },
@@ -210,28 +243,31 @@ export class ProductRepository {
         throw new NotFoundCategoryFilterException();
     }
 
-    const products = await this.prisma.product.findMany({
-      where: {
-        AND: [
-          {
-            ProductCategory: {
-              some: {
-                Category: {
-                  categoryName,
-                },
-              },
-            },
+    const baseCondition = {
+      ProductCategory: {
+        some: {
+          Category: {
+            categoryName,
           },
-          {
-            NOT: {
-              discountRate: null, // null 값인 상품은 제외
-            },
-          },
-          {
-            isOutOfStock: false, // 품절이 아닌 상품만 조회
-          },
-        ],
+        },
       },
+      NOT: {
+        discountRate: null, // null 값인 상품은 제외
+      },
+    };
+
+    const additionalCondition = [];
+
+    if (isOutOfStock === false) {
+      additionalCondition.push({ isOutOfStock: false });
+    }
+
+    const whereCondition = {
+      AND: [baseCondition, ...additionalCondition],
+    };
+
+    const products = await this.prisma.product.findMany({
+      where: whereCondition,
       orderBy: orderBy,
       select: {
         productId: true,
