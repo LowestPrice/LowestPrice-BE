@@ -40,8 +40,8 @@ export class MagazineController {
   create(
     @Req() req: CustomRequest,
     @UploadedFile() // new ParseFilePipeBuilder().build({
-    //   fileIsRequired: true,
-    file // })
+    // })
+    file //   fileIsRequired: true,
     : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
