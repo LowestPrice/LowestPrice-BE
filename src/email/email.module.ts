@@ -11,8 +11,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
-          host: 'smtp.naver.com',
-          port: 587,
+          host: process.env.EMAILHOST,
+          port: process.env.EMAILPORT,
           secure: false,
           auth: {
             user: process.env.EMAILADDRESS,
