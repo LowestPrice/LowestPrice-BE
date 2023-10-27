@@ -210,4 +210,44 @@ export class ProductService {
     });
     return obj;
   }
+  public async getSimilarProducts(
+    productId: number,
+    userId: number
+  ): Promise<object[]> {
+    // 해당 상품의 카테고리 ID와 가격 정보를 먼저 가져옵니다.
+    const productDetail = await this.productRepository.getProductDetail(
+      productId,
+      userId
+    );
+
+    if (!productDetail || !productDetail.ProductCategory) {
+      return [];
+    }
+
+    // 여기를 수정했습니다. CategoryId만 추출해서 배열로 만듭니다.
+    const categoryIds = productDetail.ProductCategory.map(
+      (cat) => cat.Category.categoryId
+    );
+
+    // 같은 카테고리에 속하고, 가격이 비슷한 상품을 찾습니다.
+    const similarProducts = await this.productRepository.getSimilarProducts(
+      categoryIds, // 수정된 부분
+      productDetail.currentPrice,
+      productId
+    );
+
+    // 알림 상태도 같이 체크합니다.
+    const similarProductsWithAlert = await Promise.all(
+      similarProducts.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // BigInt 문제를 해결하기 위해 parseProductsModel 함수를 호출합니다.
+    return this.parseProductsModel(similarProductsWithAlert) as object[];
+  }
 }
