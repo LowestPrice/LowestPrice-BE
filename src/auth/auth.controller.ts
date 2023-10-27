@@ -1,4 +1,12 @@
-import { Controller, Delete, Get, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Req,
+  Res,
+  UseGuards,
+  Post,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
@@ -35,7 +43,8 @@ export class AuthController {
     @Res({ passthrough: true }) res
   ): Promise<void> {
     //* 1. acessToken 발급, refreshToken 발급
-    const { accessToken, refreshToken } = await this.authService.kakaoLogin(kakaoUser);
+    const { accessToken, refreshToken } =
+      await this.authService.kakaoLogin(kakaoUser);
     const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
     console.log(redirect_url); // 백엔드에서 확인
 
