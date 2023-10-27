@@ -51,7 +51,7 @@ export class ProductController {
     // req.user가 존재하면 userId를 가져오고, 그렇지 않으면 null 또는 undefined를 설정해 분기처리
     const userId: number = req.user ? req.user.userId : null;
 
-    return this.productService.getProductsByCategory(categoryName,userId );
+    return this.productService.getProductsByCategory(categoryName, userId);
   }
 
   //* 상품 카테고리별 필터기능 조회
@@ -79,8 +79,24 @@ export class ProductController {
   ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
 
-    const result = await this.productService.getProductDetail(productId, userId);
+    const result = await this.productService.getProductDetail(
+      productId,
+      userId
+    );
 
     return result;
+  }
+
+  //* 유사 상품 조회
+  @Get(':productId/similar')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getSimilarProducts(
+    @Param('productId', ParseIntPipe) productId: number,
+    @Req() req: CustomRequest
+  ): Promise<object> {
+    const userId: number = req.user ? req.user.userId : null;
+
+    // productService에서 유사 상품을 가져오는 로직을 호출
+    return this.productService.getSimilarProducts(productId, userId);
   }
 }
