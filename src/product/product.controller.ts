@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Query,
   Req,
   UseGuards,
   UsePipes,
@@ -26,10 +27,13 @@ export class ProductController {
   //* 상품 전체 조회
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
-  getAllProducts(@Req() req: CustomRequest): Promise<object> {
+  getAllProducts(
+    @Req() req: CustomRequest,
+    @Query('isOutOfStock') isOutOfStock: string
+  ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
 
-    return this.productService.getAllProducts(userId);
+    return this.productService.getAllProducts(userId, isOutOfStock);
   }
 
   //* 상품 상위10개 조회
@@ -46,12 +50,18 @@ export class ProductController {
   @UseGuards(OptionalJwtAuthGuard)
   async getProductsByCategory(
     @Param('categoryName') categoryName: string,
+    @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     // req.user가 존재하면 userId를 가져오고, 그렇지 않으면 null 또는 undefined를 설정해 분기처리
     const userId: number = req.user ? req.user.userId : null;
 
-    return this.productService.getProductsByCategory(categoryName, userId);
+
+    return this.productService.getProductsByCategory(
+      categoryName,
+      userId,
+      isOutOfStock
+    );
   }
 
   //* 상품 카테고리별 필터기능 조회
@@ -60,13 +70,15 @@ export class ProductController {
   async getProductsByCategoryAndFilter(
     @Param('categoryName') categoryName: string,
     @Param('filter') filter: string,
+    @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
     return this.productService.getProductsByCategoryAndFilter(
       categoryName,
       filter,
-      userId
+      userId,
+      isOutOfStock
     );
   }
 

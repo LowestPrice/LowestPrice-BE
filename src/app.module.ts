@@ -14,6 +14,7 @@ import { ProductOptionModule } from './product-option/product-option.module';
 import { SearchModule } from './search/search.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { MypageModule } from './mypage/mypage.module';
+import { emailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MypageModule } from './mypage/mypage.module';
     ProductOptionModule,
     SearchModule,
     MypageModule,
+    emailModule,
   ],
   controllers: [AppController, ProductOptionController],
   providers: [AppService, ProductOptionService],
