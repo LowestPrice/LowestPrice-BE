@@ -20,7 +20,7 @@ export class NotificationService {
   async setNotification(userId: number, productId: number): Promise<object> {
     // 0. 상품 존재 여부 확인
 
-    const isExist: Promise<Product> | null = this.findProduct(productId);
+    const isExist: Product | null = await this.findProduct(productId);
 
     if (!isExist) {
       throw new NotFoundProductException();
@@ -41,6 +41,7 @@ export class NotificationService {
         data: {
           ProductId: productId,
           UserId: userId,
+          atPrice: isExist.currentPrice, //! 알림 설정할 당시 가격 설정
         },
       });
 
