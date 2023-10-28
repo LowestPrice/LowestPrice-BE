@@ -351,4 +351,49 @@ export class ProductRepository {
       },
     });
   }
+  //* 유사 상품 조회
+  async getSimilarProducts(
+    categoryIds: number[],
+    currentPrice: number,
+    productId: number
+  ): Promise<Product[]> {
+    // 가격 범위를 설정 (예: 현재 가격의 +- 10%)
+    const lowerPrice = currentPrice * 0.9;
+    const upperPrice = currentPrice * 1.1;
+
+    // 같은 카테고리에 속하고, 가격이 비슷한 상품을 찾습니다.
+    // 현재 상품은 제외합니다.
+    const similarProducts = await this.prisma.product.findMany({
+      where: {
+        AND: [
+          {
+            ProductCategory: {
+              some: {
+                CategoryId: {
+                  in: categoryIds,
+                },
+              },
+            },
+          },
+          {
+            currentPrice: {
+              gte: lowerPrice,
+              lte: upperPrice,
+            },
+          },
+          {
+            NOT: {
+              productId: productId,
+            },
+          },
+        ],
+      },
+      include: {
+        ProductCategory: true,
+      },
+      take: 5, // 최대 10개의 유사 상품을 가져옵니다.
+    });
+
+    return similarProducts;
+  }
 }
