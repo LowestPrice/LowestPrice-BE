@@ -69,7 +69,10 @@ export class MagazineService {
       userId
     );
 
-    return { data: parseLikeMagazines };
+    return {
+      data: parseLikeMagazines,
+      access: userId === Number(process.env.ADMIN) ? true : false,
+    };
   }
 
   async findOne(magazineId: number, userId: number): Promise<object> {
@@ -101,7 +104,10 @@ export class MagazineService {
       userId
     );
 
-    return { data: parseLikeMagazine };
+    return {
+      data: parseLikeMagazine,
+      access: userId === Number(process.env.ADMIN) ? true : false,
+    };
   }
 
   async update(
