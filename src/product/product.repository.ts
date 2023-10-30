@@ -10,6 +10,7 @@ import {
 export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+
   //* 상품 전체 조회
   async getAllProducts(userId: number, isOutOfStock: boolean) {
     // 조건에 따라 whereCondition 객체에 추가
@@ -115,9 +116,10 @@ export class ProductRepository {
   //* 상품 카테고리별 조회
   async getProductsByCategory(
     categoryName: string,
-    userId: number,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
     isOutOfStock: boolean
   ) {
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const categoryExists = await this.prisma.category.findUnique({
       where: { categoryName: categoryName },
     });
@@ -149,8 +151,25 @@ export class ProductRepository {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    let cursorCondition = {};
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      ...cursorCondition,
+      take: 8,
       select: {
         productId: true,
         coupangItemId: true,
@@ -182,27 +201,6 @@ export class ProductRepository {
       throw new NotFoundProductException();
     }
 
-    // // 각 상품의 알림 상태를 확인하고 추가
-    // const productsWithNotificationStatus: object[] = await Promise.all(
-    //   products.map(async (product) => {
-    //     let isAlertOn = false;
-    //     if (userId) {
-    //       const notification = await this.prisma.userProduct.findFirst({
-    //         where: {
-    //           UserId: userId,
-    //           ProductId: product.productId,
-    //         },
-    //       });
-    //       if (notification) isAlertOn = true;
-    //     }
-    //     return {
-    //       ...product,
-    //       isAlertOn: isAlertOn,
-    //     };
-    //   })
-    // );
-
-    // return productsWithNotificationStatus;
     return products;
   }
 

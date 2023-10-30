@@ -62,6 +62,7 @@ export class ProductService {
   async getProductsByCategory(
     categoryName: string,
     userId: number,
+    lastId: number | null,
     isOutOfStock: string
   ) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
@@ -70,9 +71,11 @@ export class ProductService {
 
     const products = await this.productRepository.getProductsByCategory(
       categoryName,
-      userId,
+      lastId,
       isOutOfStockBoolean
     );
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
 
     // 상품 알림 여부 확인
     // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
@@ -90,6 +93,7 @@ export class ProductService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     return { data: parseProducts };
   }
 
