@@ -10,7 +10,6 @@ import {
 export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-
   //* 상품 전체 조회
   async getAllProducts(userId: number, isOutOfStock: boolean) {
     // 조건에 따라 whereCondition 객체에 추가

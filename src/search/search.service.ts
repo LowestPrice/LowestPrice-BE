@@ -64,7 +64,12 @@ export class SearchService {
   }
 
   //* 상품 검색
-  async searchProduct(search: string, userId: number, isOutOfStock: string) {
+  async searchProduct(
+    search: string,
+    userId: number,
+    lastId: number | null,
+    isOutOfStock: string
+  ) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
     // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
     const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
@@ -74,7 +79,7 @@ export class SearchService {
 
     const products = await this.searchRepository.searchProduct(
       transformedSearch,
-      userId,
+      lastId,
       isOutOfStockBoolean
     );
 
