@@ -14,7 +14,7 @@ async function bootstrap() {
       'https://lowest-price.store',
     ],
     credentials: true,
-    exposedHeaders: ['Authorization'],
+    exposedHeaders: ['Authorization', 'refreshToken'],
   });
 
   app.useGlobalPipes(
