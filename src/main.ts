@@ -8,7 +8,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // CORS 설정
   app.enableCors({
-    origin: ['https://lowest-price.vercel.app', 'http://localhost:5173'],
+    origin: [
+      'https://lowest-price.vercel.app',
+      'http://localhost:5173',
+      'https://lowest-price.store',
+    ],
     credentials: true,
     exposedHeaders: ['Authorization'],
   });
