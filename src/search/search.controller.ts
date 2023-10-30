@@ -16,13 +16,21 @@ export class SearchController {
   @UseGuards(OptionalJwtAuthGuard)
   async searchProducts(
     @Query('search') search: string,
+    @Query('lastId') lastIdString: string,
     @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     // req.user가 존재하면 userId를 가져오고, 그렇지 않으면 null 또는 undefined를 설정해 분기처리
     const userId: number = req.user ? req.user.userId : null;
 
-    return this.searchService.searchProduct(search, userId, isOutOfStock);
+    const lastId = Number(lastIdString) ? Number(lastIdString) : null;
+
+    return this.searchService.searchProduct(
+      search,
+      userId,
+      lastId,
+      isOutOfStock
+    );
   }
 
   //* 상품 검색 필터
