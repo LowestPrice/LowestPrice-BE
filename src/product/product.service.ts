@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
+import { last } from 'rxjs';
 
 @Injectable()
 export class ProductService {
@@ -62,6 +63,7 @@ export class ProductService {
   async getProductsByCategory(
     categoryName: string,
     userId: number,
+    lastId: number | null,
     isOutOfStock: string
   ) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
@@ -70,9 +72,11 @@ export class ProductService {
 
     const products = await this.productRepository.getProductsByCategory(
       categoryName,
-      userId,
+      lastId,
       isOutOfStockBoolean
     );
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
 
     // 상품 알림 여부 확인
     // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
@@ -90,6 +94,7 @@ export class ProductService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     return { data: parseProducts };
   }
 
@@ -97,6 +102,7 @@ export class ProductService {
   async getProductsByCategoryAndFilter(
     categoryName: string,
     filter: string,
+    lastId: number | null,
     userId: number,
     isOutOfStock: string
   ) {
@@ -110,7 +116,7 @@ export class ProductService {
       await this.productRepository.getProductsByCategoryAndFilter(
         categoryName,
         filter,
-        userId,
+        lastId,
         isOutOfStockBoolean
       );
 
@@ -209,5 +215,45 @@ export class ProductService {
       }
     });
     return obj;
+  }
+  public async getSimilarProducts(
+    productId: number,
+    userId: number
+  ): Promise<object[]> {
+    // 해당 상품의 카테고리 ID와 가격 정보를 먼저 가져옵니다.
+    const productDetail = await this.productRepository.getProductDetail(
+      productId,
+      userId
+    );
+
+    if (!productDetail || !productDetail.ProductCategory) {
+      return [];
+    }
+
+    // 여기를 수정했습니다. CategoryId만 추출해서 배열로 만듭니다.
+    const categoryIds = productDetail.ProductCategory.map(
+      (cat) => cat.Category.categoryId
+    );
+
+    // 같은 카테고리에 속하고, 가격이 비슷한 상품을 찾습니다.
+    const similarProducts = await this.productRepository.getSimilarProducts(
+      categoryIds, // 수정된 부분
+      productDetail.currentPrice,
+      productId
+    );
+
+    // 알림 상태도 같이 체크합니다.
+    const similarProductsWithAlert = await Promise.all(
+      similarProducts.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // BigInt 문제를 해결하기 위해 parseProductsModel 함수를 호출합니다.
+    return this.parseProductsModel(similarProductsWithAlert) as object[];
   }
 }

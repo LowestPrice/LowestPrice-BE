@@ -29,7 +29,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
       snsId: String(profile.id),
       nickname: profile.displayName,
       provider: profile.provider,
-      image: profile._json.profile_image,
+      image: profile._json.properties.profile_image,
     };
 
     done(null, user);

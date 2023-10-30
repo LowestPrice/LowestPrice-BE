@@ -115,9 +115,10 @@ export class ProductRepository {
   //* 상품 카테고리별 조회
   async getProductsByCategory(
     categoryName: string,
-    userId: number,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
     isOutOfStock: boolean
   ) {
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const categoryExists = await this.prisma.category.findUnique({
       where: { categoryName: categoryName },
     });
@@ -149,8 +150,25 @@ export class ProductRepository {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    let cursorCondition = {};
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      ...cursorCondition,
+      take: 8,
       select: {
         productId: true,
         coupangItemId: true,
@@ -182,27 +200,6 @@ export class ProductRepository {
       throw new NotFoundProductException();
     }
 
-    // // 각 상품의 알림 상태를 확인하고 추가
-    // const productsWithNotificationStatus: object[] = await Promise.all(
-    //   products.map(async (product) => {
-    //     let isAlertOn = false;
-    //     if (userId) {
-    //       const notification = await this.prisma.userProduct.findFirst({
-    //         where: {
-    //           UserId: userId,
-    //           ProductId: product.productId,
-    //         },
-    //       });
-    //       if (notification) isAlertOn = true;
-    //     }
-    //     return {
-    //       ...product,
-    //       isAlertOn: isAlertOn,
-    //     };
-    //   })
-    // );
-
-    // return productsWithNotificationStatus;
     return products;
   }
 
@@ -210,7 +207,7 @@ export class ProductRepository {
   async getProductsByCategoryAndFilter(
     categoryName: string,
     filter: string,
-    userId: number,
+    lastId: number | null,
     isOutOfStock: boolean
   ) {
     const categoryExists = await this.prisma.category.findUnique({
@@ -266,8 +263,24 @@ export class ProductRepository {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    let cursorCondition = {};
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      ...cursorCondition,
+      take: 8,
       orderBy: orderBy,
       select: {
         productId: true,
@@ -350,5 +363,50 @@ export class ProductRepository {
         ProductId: productId,
       },
     });
+  }
+  //* 유사 상품 조회
+  async getSimilarProducts(
+    categoryIds: number[],
+    currentPrice: number,
+    productId: number
+  ): Promise<Product[]> {
+    // 가격 범위를 설정 (예: 현재 가격의 +- 10%)
+    const lowerPrice = currentPrice * 0.9;
+    const upperPrice = currentPrice * 1.1;
+
+    // 같은 카테고리에 속하고, 가격이 비슷한 상품을 찾습니다.
+    // 현재 상품은 제외합니다.
+    const similarProducts = await this.prisma.product.findMany({
+      where: {
+        AND: [
+          {
+            ProductCategory: {
+              some: {
+                CategoryId: {
+                  in: categoryIds,
+                },
+              },
+            },
+          },
+          {
+            currentPrice: {
+              gte: lowerPrice,
+              lte: upperPrice,
+            },
+          },
+          {
+            NOT: {
+              productId: productId,
+            },
+          },
+        ],
+      },
+      include: {
+        ProductCategory: true,
+      },
+      take: 5, // 최대 10개의 유사 상품을 가져옵니다.
+    });
+
+    return similarProducts;
   }
 }
