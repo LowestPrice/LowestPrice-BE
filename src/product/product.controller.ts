@@ -75,13 +75,17 @@ export class ProductController {
   async getProductsByCategoryAndFilter(
     @Param('categoryName') categoryName: string,
     @Param('filter') filter: string,
+    @Query('lastId') lastIdString: string,
     @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
+    const lastId = Number(lastIdString)? Number(lastIdString) : null;
+
     return this.productService.getProductsByCategoryAndFilter(
       categoryName,
       filter,
+      lastId,
       userId,
       isOutOfStock
     );

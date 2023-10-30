@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { ProductRepository } from './product.repository';
+import { last } from 'rxjs';
 
 @Injectable()
 export class ProductService {
@@ -101,6 +102,7 @@ export class ProductService {
   async getProductsByCategoryAndFilter(
     categoryName: string,
     filter: string,
+    lastId: number | null,
     userId: number,
     isOutOfStock: string
   ) {
@@ -114,7 +116,7 @@ export class ProductService {
       await this.productRepository.getProductsByCategoryAndFilter(
         categoryName,
         filter,
-        userId,
+        lastId,
         isOutOfStockBoolean
       );
 
