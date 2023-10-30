@@ -50,16 +50,21 @@ export class ProductController {
   @UseGuards(OptionalJwtAuthGuard)
   async getProductsByCategory(
     @Param('categoryName') categoryName: string,
+    @Query('lastId') lastIdString: string,
     @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     // req.user가 존재하면 userId를 가져오고, 그렇지 않으면 null 또는 undefined를 설정해 분기처리
     const userId: number = req.user ? req.user.userId : null;
 
+    console.log('lastId: ', lastIdString, 'typeOf: ', typeof lastIdString);
+    const lastId = Number(lastIdString) ? Number(lastIdString) : null;
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
 
     return this.productService.getProductsByCategory(
       categoryName,
       userId,
+      lastId,
       isOutOfStock
     );
   }
@@ -70,13 +75,17 @@ export class ProductController {
   async getProductsByCategoryAndFilter(
     @Param('categoryName') categoryName: string,
     @Param('filter') filter: string,
+    @Query('lastId') lastIdString: string,
     @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
+    const lastId = Number(lastIdString) ? Number(lastIdString) : null;
+
     return this.productService.getProductsByCategoryAndFilter(
       categoryName,
       filter,
+      lastId,
       userId,
       isOutOfStock
     );
