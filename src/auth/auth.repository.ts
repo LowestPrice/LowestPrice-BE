@@ -49,6 +49,18 @@ export class AuthRepository {
     });
   }
 
+  //* 사용자의 refresh 토큰 조회
+  async findRefresh(userId: number) {
+    return await this.prisma.user.findFirst({
+      where: {
+        userId: userId,
+      },
+      select: {
+        refreshToken: true,
+      },
+    });
+  }
+
   //* 회원탈퇴
   async kakaoDeactivate(userId: number) {
     return await this.prisma.user.delete({
