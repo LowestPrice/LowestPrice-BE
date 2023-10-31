@@ -4,6 +4,7 @@ import { EmailController } from './email.controller';
 import { EmailService } from './email.service';
 import { EmailRepository } from './email.repository';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         },
       }),
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [EmailController],
   providers: [EmailService, EmailRepository],
