@@ -24,6 +24,18 @@ interface CustomRequest extends Request {
 export class ProductController {
   constructor(private productService: ProductService) {}
 
+  //* 상품 랜덤 조회
+  @Get('random')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getRandomProducts(
+    @Req() req: CustomRequest,
+    @Query('isOutOfStock') isOutOfStock: string
+  ) {
+    const userId: number = req.user ? req.user.userId : null;
+
+    return this.productService.getRandomProducts(userId, isOutOfStock);
+  }
+
   //* 상품 전체 조회
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
@@ -61,12 +73,14 @@ export class ProductController {
     const lastId = Number(lastIdString) ? Number(lastIdString) : null;
     console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
 
-    return this.productService.getProductsByCategory(
+    const productList = await this.productService.getProductsByCategory(
       categoryName,
       userId,
       lastId,
       isOutOfStock
     );
+
+    return productList;
   }
 
   //* 상품 카테고리별 필터기능 조회
