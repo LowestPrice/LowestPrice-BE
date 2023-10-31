@@ -6,18 +6,13 @@ export class ProductService {
   constructor(private readonly productRepository: ProductRepository) {}
 
   //* 상품 랜덤 조회
-  async getRandomProducts(userId: number, lastId: number | null, isOutOfStock: string) {
+  async getRandomProducts(userId: number, isOutOfStock: string) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
     // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
     const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
 
-    const products = await this.productRepository.getRandomProducts(
-      userId,
-      lastId,
-      isOutOfStockBoolean
-    );
-
-    console.log('random products: ', products)
+    const products =
+      await this.productRepository.getRandomProducts(isOutOfStockBoolean);
 
     // 상품 알림 여부 확인
     // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
@@ -36,7 +31,6 @@ export class ProductService {
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
     return { data: parseProducts };
-
   }
 
   //* 상품 전체 조회

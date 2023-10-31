@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
+import { add } from 'date-fns';
 import {
   NotFoundCategoryException,
   NotFoundCategoryFilterException,
@@ -11,7 +12,7 @@ export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   //* 상품 랜덤 조회
-  async getRandomProducts(userId: number, lastId: number | null, isOutOfStock: boolean ) {
+  async getRandomProducts(isOutOfStock: boolean) {
     // 조건에 따라 whereCondition 객체에 추가
     // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
     type WhereConditionType = {
@@ -19,12 +20,12 @@ export class ProductRepository {
     };
     let whereCondition: WhereConditionType = {};
 
-    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)
+    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)에만 whereCondition 객체에 추가
     if (isOutOfStock === false) {
       whereCondition.isOutOfStock = false;
     }
 
-    const pageSize = 50;
+    const pageSize = 8;
     let ids: number[] = [];
 
     const results = await this.prisma.$queryRawUnsafe<{ productId: number }[]>(
@@ -34,19 +35,6 @@ export class ProductRepository {
     console.log('results1: ', results);
 
     ids = results.map((item) => item.productId);
-
-    // let cursorCondition = {};
-
-    // if (lastId) {
-    //   cursorCondition = {
-    //     cursor: {
-    //       // 마지막으로 조회한 상품의 ID
-    //       productId: lastId,
-    //     },
-    //     // 커서의 상품을 건너뜁니다.
-    //     skip: 1,
-    //   };
-    // }
 
     const products = await this.prisma.product.findMany({
       where: { AND: [{ productId: { in: ids } }, whereCondition] },
