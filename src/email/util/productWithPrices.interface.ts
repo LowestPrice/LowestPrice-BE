@@ -3,4 +3,5 @@ export interface ProductWithPrices {
   email: string;
   atPrice: number;
   currentPrice: number;
+  productPartnersUrl: string;
 }
