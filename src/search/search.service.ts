@@ -105,6 +105,7 @@ export class SearchService {
     search: string,
     filter: string,
     userId: number,
+    lastId: number | null,
     isOutOfStock: string
   ) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
@@ -117,6 +118,7 @@ export class SearchService {
     const products = await this.searchRepository.searchProductByFilter(
       transformedSearch,
       filter,
+      lastId,
       isOutOfStockBoolean
     );
 

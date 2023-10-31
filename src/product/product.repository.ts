@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
+import { add } from 'date-fns';
 import {
   NotFoundCategoryException,
   NotFoundCategoryFilterException,
@@ -9,6 +10,63 @@ import {
 @Injectable()
 export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  //* 상품 랜덤 조회
+  async getRandomProducts(isOutOfStock: boolean) {
+    // 조건에 따라 whereCondition 객체에 추가
+    // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
+    type WhereConditionType = {
+      isOutOfStock?: boolean;
+    };
+    let whereCondition: WhereConditionType = {};
+
+    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)에만 whereCondition 객체에 추가
+    if (isOutOfStock === false) {
+      whereCondition.isOutOfStock = false;
+    }
+
+    const pageSize = 8;
+    let ids: number[] = [];
+
+    const results = await this.prisma.$queryRawUnsafe<{ productId: number }[]>(
+      `SELECT productId FROM Product WHERE isOutOfStock = ${isOutOfStock} ORDER BY RAND() LIMIT ${pageSize};`
+    );
+
+    console.log('results1: ', results);
+
+    ids = results.map((item) => item.productId);
+
+    const products = await this.prisma.product.findMany({
+      where: { AND: [{ productId: { in: ids } }, whereCondition] },
+      select: {
+        productId: true,
+        coupangItemId: true,
+        coupangVendorId: true,
+        productName: true,
+        productImage: true,
+        isOutOfStock: true,
+        originalPrice: true,
+        currentPrice: true,
+        discountRate: true,
+        cardDiscount: true,
+        createdAt: true,
+        updatedAt: true,
+        ProductCategory: {
+          select: {
+            Category: {
+              select: {
+                categoryId: true,
+                categoryName: true,
+              },
+            },
+          },
+        },
+      },
+      take: pageSize,
+    });
+
+    return products;
+  }
 
   //* 상품 전체 조회
   async getAllProducts(userId: number, isOutOfStock: boolean) {
@@ -195,11 +253,8 @@ export class ProductRepository {
       },
     });
 
-    // 해당카테고리에 제품이 없으면 Not Found 예외처리
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
-
+    // 해당 카테고리에 제품이 없으면 빈 배열을 반환합니다.
+    console.log('products: ', products);
     return products;
   }
 
