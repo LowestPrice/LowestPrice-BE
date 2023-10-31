@@ -168,6 +168,10 @@ export class ProductService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
+
     return { data: parseProducts };
   }
 
