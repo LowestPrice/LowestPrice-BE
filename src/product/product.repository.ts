@@ -365,10 +365,6 @@ export class ProductRepository {
       },
     });
 
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
-
     return products;
   }
 

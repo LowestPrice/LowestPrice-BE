@@ -85,10 +85,6 @@ export class SearchRepository {
       },
     });
 
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
-
     return products;
   }
 
@@ -189,10 +185,6 @@ export class SearchRepository {
         },
       },
     });
-
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
 
     return products;
   }
