@@ -39,15 +39,19 @@ export class SearchController {
   async searchProductsByFilter(
     @Query('search') search: string,
     @Param('filter') filter: string,
+    @Query('lastId') lastIdString: string,
     @Query('isOutOfStock') isOutOfStock: string,
     @Req() req: CustomRequest
   ): Promise<object> {
     const userId: number = req.user ? req.user.userId : null;
 
+    const lastId = Number(lastIdString) ? Number(lastIdString) : null;
+
     return this.searchService.searchProductByFilter(
       search,
       filter,
       userId,
+      lastId,
       isOutOfStock
     );
   }

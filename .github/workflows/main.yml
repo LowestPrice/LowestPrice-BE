@@ -70,6 +70,11 @@ jobs:
 
           echo ADMIN=${{ secrets.ADMIN }} >> .env
 
+          echo EMAILADDRESS=${{ secrets.EMAILADDRESS }} >> .env
+          echo EMAILPASSWORD=${{ secrets.EMAILPASSWORD }} >> .env
+          echo EMAILHOST=${{ secrets.EMAILHOST }} >> .env
+          echo EMAIIPORT=${{ secrets.EMAIIPORT }} >> .env
+
       # S3로 업로드 할 프로젝트 압축 파일 생성
       - name: make .zip file
         run: zip -qq -r ./$GITHUB_SHA.zip .
