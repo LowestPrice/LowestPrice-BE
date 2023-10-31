@@ -210,6 +210,8 @@ export class ProductRepository {
 
     let cursorCondition = {};
 
+    const isFirstPage = !lastId;
+
     console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     if (lastId) {
       cursorCondition = {
@@ -225,8 +227,8 @@ export class ProductRepository {
     console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const products = await this.prisma.product.findMany({
       where: whereCondition,
-      ...cursorCondition,
       take: 8,
+      ...(!isFirstPage && cursorCondition),
       select: {
         productId: true,
         coupangItemId: true,

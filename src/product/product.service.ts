@@ -126,9 +126,9 @@ export class ProductService {
     console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
 
     if (Object.entries(parseProducts).length === 0) {
-      console.log(undefined)
-      return undefined ;
+      return { undefined };
     }
+
     return { data: parseProducts };
   }
 
