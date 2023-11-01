@@ -52,6 +52,7 @@ export class AuthController {
 
     //* 토큰 쿠키로 전송
     res.cookie('Authorization', `Bearer ${accessToken}`, {
+      domain: process.env.FRONT_HOST,
       httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       sameSite: 'none',
       secure: true,
@@ -59,6 +60,7 @@ export class AuthController {
     });
 
     res.cookie('refreshToken', `Bearer ${refreshToken}`, {
+      domain: process.env.FRONT_HOST,
       httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       sameSite: 'none',
       secure: true,
