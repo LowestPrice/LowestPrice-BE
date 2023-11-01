@@ -45,7 +45,26 @@ export class AuthController {
     //* 1. acessToken 발급, refreshToken 발급
     const { accessToken, refreshToken } =
       await this.authService.kakaoLogin(kakaoUser);
-    const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
+
+    //* query string 형태로 토큰 전송
+    //const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
+
+    //* 토큰 쿠키로 전송
+    res.cookie('Authorization', `Bearer ${accessToken}`, {
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      sameSite: 'none',
+      secure: true,
+      maxAge: 18000, // 쿠키 만료 시간 설정 (예: 1시간)
+    });
+
+    res.cookie('refreshToken', `Bearer ${refreshToken}`, {
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      sameSite: 'none',
+      secure: true,
+      maxAge: 18000, // 쿠키 만료 시간 설정 (예: 1시간)
+    });
+
+    const redirect_url = `${process.env.CLIENT_URL}`;
     console.log(redirect_url); // 백엔드에서 확인
 
     //* 2. 프론트로 redirect
