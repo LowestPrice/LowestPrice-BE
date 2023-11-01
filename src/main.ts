@@ -29,7 +29,7 @@ async function bootstrap() {
   );
 
   // cookie parser 미들웨어 추가
-  app.use(cookieParser(process.env.COOKIE_SECRET));
+  // app.use(cookieParser(process.env.COOKIE_SECRET));
 
   const config = new DocumentBuilder()
     .setTitle('Cats example')

@@ -5,9 +5,9 @@ export class RefreshTokenGuard extends AuthGuard('refresh-jwt') {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     // 이전 방법 - 헤더에서 토큰을 가져옵니다.
-    // const token = request.headers.refreshtoken?.replace('Bearer ', '');
+    const token = request.headers.refreshtoken?.replace('Bearer ', '');
     // 쿠키에서 리프레시 토큰을 가져옵니다. main.ts에 cookie-parser 설정
-    const token = request.cookies?.refreshToken?.replace('Bearer ', '');
+    // const token = request.cookies?.refreshToken?.replace('Bearer ', '');
     console.log('리프레시 토큰', token);
 
     // 토큰이 있을 때에만 검증 수행
