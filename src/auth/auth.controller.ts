@@ -99,8 +99,5 @@ export class AuthController {
       secure: true,
       maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
     });
-
-    // 뉴액세스토큰 확인
-    res.send({ accessToken });
   }
 }
