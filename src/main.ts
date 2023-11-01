@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,6 +27,9 @@ async function bootstrap() {
       },
     })
   );
+
+  // cookie parser 미들웨어 추가
+  // app.use(cookieParser(process.env.COOKIE_SECRET));
 
   const config = new DocumentBuilder()
     .setTitle('Cats example')
