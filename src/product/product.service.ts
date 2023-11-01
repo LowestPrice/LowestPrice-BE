@@ -5,9 +5,44 @@ import { ProductRepository } from './product.repository';
 export class ProductService {
   constructor(private readonly productRepository: ProductRepository) {}
 
+  //* 상품 랜덤 조회
+  async getRandomProducts(userId: number, isOutOfStock: string) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
+    const products =
+      await this.productRepository.getRandomProducts(isOutOfStockBoolean);
+
+    // 상품 알림 여부 확인
+    // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
+    const addAlertProducts = await Promise.all(
+      //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
+      products.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // 상품 알림 여부를 추가한 배열을 객체로 변환
+    const parseProducts = this.parseProductsModel(addAlertProducts);
+
+    return { data: parseProducts };
+  }
+
   //* 상품 전체 조회
-  async getAllProducts(userId: number) {
-    const products = await this.productRepository.getAllProducts(userId);
+  async getAllProducts(userId: number, isOutOfStock: string) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
+    const products = await this.productRepository.getAllProducts(
+      userId,
+      isOutOfStockBoolean
+    );
 
     // 상품 알림 여부 확인
     // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
@@ -52,12 +87,25 @@ export class ProductService {
   }
 
   //* 상품 카테고리별 조회
-  async getProductsByCategory(categoryName: string, userId: number) {
+  async getProductsByCategory(
+    categoryName: string,
+    userId: number,
+    lastId: number | null,
+    isOutOfStock: string
+  ) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
     const products = await this.productRepository.getProductsByCategory(
       categoryName,
-      userId
+      lastId,
+      isOutOfStockBoolean
     );
 
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+
+    console.log('service products: ', products);
     // 상품 알림 여부 확인
     // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
     const addAlertProducts = await Promise.all(
@@ -74,6 +122,13 @@ export class ProductService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    console.log('parseProducts: ', parseProducts);
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
+
     return { data: parseProducts };
   }
 
@@ -81,14 +136,22 @@ export class ProductService {
   async getProductsByCategoryAndFilter(
     categoryName: string,
     filter: string,
-    userId: number
+    lastId: number | null,
+    userId: number,
+    isOutOfStock: string
   ) {
     console.log(`categoryName: ${categoryName}, filter:${filter}`);
+
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
     const products =
       await this.productRepository.getProductsByCategoryAndFilter(
         categoryName,
         filter,
-        userId
+        lastId,
+        isOutOfStockBoolean
       );
 
     const addAlertProducts = await Promise.all(
@@ -105,16 +168,23 @@ export class ProductService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
+
     return { data: parseProducts };
   }
 
   //* 상품 상세 조회
   async getProductDetail(productId: number, userId: number) {
-    const product = await this.productRepository.getProductDetail(productId, userId);
+    const product = await this.productRepository.getProductDetail(
+      productId,
+      userId
+    );
 
     let isAlertOn = await this.checkAlertStatus(product, userId);
 
-    const parseProduct = this.parseProductModel({ ...product, isAlertOn});
+    const parseProduct = this.parseProductModel({ ...product, isAlertOn });
 
     return { data: parseProduct };
   }
@@ -183,5 +253,45 @@ export class ProductService {
       }
     });
     return obj;
+  }
+  public async getSimilarProducts(
+    productId: number,
+    userId: number
+  ): Promise<object[]> {
+    // 해당 상품의 카테고리 ID와 가격 정보를 먼저 가져옵니다.
+    const productDetail = await this.productRepository.getProductDetail(
+      productId,
+      userId
+    );
+
+    if (!productDetail || !productDetail.ProductCategory) {
+      return [];
+    }
+
+    // 여기를 수정했습니다. CategoryId만 추출해서 배열로 만듭니다.
+    const categoryIds = productDetail.ProductCategory.map(
+      (cat) => cat.Category.categoryId
+    );
+
+    // 같은 카테고리에 속하고, 가격이 비슷한 상품을 찾습니다.
+    const similarProducts = await this.productRepository.getSimilarProducts(
+      categoryIds, // 수정된 부분
+      productDetail.currentPrice,
+      productId
+    );
+
+    // 알림 상태도 같이 체크합니다.
+    const similarProductsWithAlert = await Promise.all(
+      similarProducts.map(async (product) => {
+        const isAlertOn = await this.checkAlertStatus(product, userId);
+        return {
+          ...product,
+          isAlertOn,
+        };
+      })
+    );
+
+    // BigInt 문제를 해결하기 위해 parseProductsModel 함수를 호출합니다.
+    return this.parseProductsModel(similarProductsWithAlert) as object[];
   }
 }

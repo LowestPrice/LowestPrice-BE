@@ -77,7 +77,11 @@ export class MagazineController {
   @Get('/:magazineId')
   @UseGuards(OptionalJwtAuthGuard) //! jwt 있으면 userId 파싱 후 통과, jwt 없으면 그냥 통과
   findOne(@Req() req: CustomRequest, @Param('magazineId') magazineId: number) {
-    const userId: number = req.user.userId;
+    let userId = null;
+    // 인증된 사용자인 경우 userId를 설정
+    if (req.user) {
+      userId = req.user.userId;
+    }
     return this.magazineService.findOne(magazineId, userId);
   }
 

@@ -10,7 +10,11 @@ export class SearchRepository {
   constructor(private prisma: PrismaService) {}
 
   //* 검색어가 포함된 상품을 조회
-  async searchProduct(search: string) {
+  async searchProduct(
+    search: string,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
+    isOutOfStock: boolean
+  ) {
     // 공백을 기준으로 검색어를 각각 분리해서 배열로 만듬
     const searchWords = search.split(' ');
     // 검색어가 포함된 상품을 찾기 위한 조건
@@ -22,11 +26,39 @@ export class SearchRepository {
       },
     }));
 
+    // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
+    type WhereCondition = {
+      AND?: typeof searchCondition;
+      isOutOfStock?: boolean;
+    };
+
+    let whereCondition: WhereCondition = { AND: searchCondition }; //검색어가 포함된 상품을 찾는다.
+
+    // 조건에 따라 whereCondition 객체에 추가
+    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)
+    if (isOutOfStock === false) {
+      whereCondition.isOutOfStock = false;
+    }
+
+    // 페이징 처리를 위한 커서 기반의 페이지네이션
+    let cursorCondition = {};
+
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
     //* 검색결과 조회시 AND 조건으로 조회
     const products = await this.prisma.product.findMany({
-      where: {
-        AND: searchCondition, //검색어가 포함된 상품을 찾는다.
-      },
+      where: whereCondition,
+      ...cursorCondition,
+      take: 8,
       select: {
         productId: true,
         coupangItemId: true,
@@ -53,15 +85,16 @@ export class SearchRepository {
       },
     });
 
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
-
     return products;
   }
 
   //* 검색어가 포함된 상품을 카테고리별로 조회
-  async searchProductByFilter(search: string, filter: string) {
+  async searchProductByFilter(
+    search: string,
+    filter: string,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
+    isOutOfStock: boolean
+  ) {
     const searchWords = search.split(' ');
 
     const searchCondition = searchWords.map((word) => ({
@@ -70,6 +103,20 @@ export class SearchRepository {
         contains: word,
       },
     }));
+
+    // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
+    type WhereCondition = {
+      AND?: typeof searchCondition;
+      isOutOfStock?: boolean;
+    };
+
+    let whereCondition: WhereCondition = { AND: searchCondition }; // 기본 검색 조건
+
+    // 조건에 따라 whereCondition 객체에 추가
+    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)
+    if (isOutOfStock === false) {
+      whereCondition.isOutOfStock = false;
+    }
 
     let orderBy = {};
 
@@ -93,10 +140,25 @@ export class SearchRepository {
         throw new NotFoundSearchFilterException();
     }
 
+    // 페이징 처리를 위한 커서 기반의 페이지네이션
+    let cursorCondition = {};
+
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
     const products = await this.prisma.product.findMany({
-      where: {
-        AND: searchCondition, //검색어가 포함된 상품을 찾는다.
-      },
+      where: whereCondition,
+      ...cursorCondition,
+      // 8개의 상품만 조회
+      take: 8,
       orderBy: orderBy, // 정렬 조건
       select: {
         productId: true,
@@ -123,10 +185,6 @@ export class SearchRepository {
         },
       },
     });
-
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
 
     return products;
   }

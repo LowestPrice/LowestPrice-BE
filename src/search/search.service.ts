@@ -64,12 +64,24 @@ export class SearchService {
   }
 
   //* 상품 검색
-  async searchProduct(search: string, userId: number) {
+  async searchProduct(
+    search: string,
+    userId: number,
+    lastId: number | null,
+    isOutOfStock: string
+  ) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
     // 변환된 검색어
     const transformedSearch = this.transformSearch(search);
 
-    const products =
-      await this.searchRepository.searchProduct(transformedSearch);
+    const products = await this.searchRepository.searchProduct(
+      transformedSearch,
+      lastId,
+      isOutOfStockBoolean
+    );
 
     const addAlertProducts = await Promise.all(
       //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
@@ -84,18 +96,34 @@ export class SearchService {
 
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
+
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
 
     return { data: parseProducts };
   }
 
   //* 상품 검색 필터기능
-  async searchProductByFilter(search: string, filter: string, userId: number) {
+  async searchProductByFilter(
+    search: string,
+    filter: string,
+    userId: number,
+    lastId: number | null,
+    isOutOfStock: string
+  ) {
+    // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
+    // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
+    const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
+
     // 변환된 검색어
     const transformedSearch = this.transformSearch(search);
 
     const products = await this.searchRepository.searchProductByFilter(
       transformedSearch,
-      filter
+      filter,
+      lastId,
+      isOutOfStockBoolean
     );
 
     const addAlertProducts = await Promise.all(
@@ -111,6 +139,10 @@ export class SearchService {
 
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
+
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
 
     return { data: parseProducts };
   }
