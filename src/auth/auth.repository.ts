@@ -69,4 +69,16 @@ export class AuthRepository {
       },
     });
   }
+
+  //* 로그아웃
+  async deleteRefreshToken(userId: number) {
+    return await this.prisma.user.update({
+      where: {
+        userId: userId,
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
+  }
 }

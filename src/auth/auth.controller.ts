@@ -52,6 +52,7 @@ export class AuthController {
 
     //* 토큰 쿠키로 전송
     res.cookie('Authorization', `Bearer ${accessToken}`, {
+      domain: process.env.FRONT_HOST,
       httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       sameSite: 'none',
       secure: true,
@@ -59,6 +60,7 @@ export class AuthController {
     });
 
     res.cookie('refreshToken', `Bearer ${refreshToken}`, {
+      domain: process.env.FRONT_HOST,
       httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       sameSite: 'none',
       secure: true,
@@ -99,5 +101,23 @@ export class AuthController {
       secure: true,
       maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
     });
+  }
+
+  //* 로그아웃
+  @Post('/logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Req() req: CustomRequest, @Res({ passthrough: true }) res) {
+    const userId: number = req.user.userId;
+
+    // DB에서 리프레시 토큰 삭제
+    await this.authService.deleteAccessRefreshToken(userId);
+
+    // 쿠키에서 리프레시 토큰 삭제
+    res.clearCookie('refreshToken');
+
+    // 쿠키에서 액세스 토큰 삭제
+    res.clearCookie('Authorization');
+
+    return { message: '로그아웃에 성공했습니다.' };
   }
 }
