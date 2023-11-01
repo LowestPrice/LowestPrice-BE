@@ -59,6 +59,24 @@ export class SearchService {
       search = search.replace('아이패드 미니', '아이패드 mini');
     }
 
+    // 매직 키보드, 매직 마우스 등과 같은 단어를 정확한 상품명으로 변환하는 매핑
+    const mappings = {
+      매직키보드: 'Magic Keyboard',
+      매직마우스: 'Magic Mouse',
+      마우스: 'Mouse',
+      트랙패드: 'Trackpad',
+      매직트랙패드: 'Magic Trackpad',
+      키보드: 'Keyboard',
+      울트라: 'Ultra',
+    };
+
+    // 매핑된 단어를 변환
+    Object.entries(mappings).forEach(([key, value]) => {
+      //정규 표현식에서 gi 플래그를 사용하여 대소문자를 무시
+      const regex = new RegExp(key, 'gi');
+      search = search.replace(regex, value);
+    });
+
     console.log(`transformed search: ${search}`);
     return search;
   }
