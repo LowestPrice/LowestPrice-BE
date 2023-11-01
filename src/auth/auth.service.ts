@@ -17,7 +17,7 @@ export class AuthService {
 
   //* 카카오 로그인
   async kakaoLogin(kakaoUser: KakaoUserAfterAuth) {
-    // 1. DB에 해당 사용자 존재 여부 확인 
+    // 1. DB에 해당 사용자 존재 여부 확인
     let isExistKaKaoUser = await this.authRepository.findKakaoUser(
       kakaoUser.snsId
     );
@@ -46,13 +46,13 @@ export class AuthService {
     });
 
     // 4. refresh 토큰 DB에 저장
-    try{
-    await this.authRepository.saveRefresh(
-      isExistKaKaoUser.userId,
-      refreshToken
-    );
+    try {
+      await this.authRepository.saveRefresh(
+        isExistKaKaoUser.userId,
+        refreshToken
+      );
     } catch (err) {
-      console.error("refresh 토큰 저장 실패");
+      console.error('refresh 토큰 저장 실패');
     }
 
     //*! 기존의 쿠키 방식
