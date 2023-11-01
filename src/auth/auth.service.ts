@@ -89,4 +89,9 @@ export class AuthService {
       message: '회원 탈퇴에 성공했습니다.',
     };
   }
+
+  //* 로그아웃
+  async deleteAccessRefreshToken(userId: number) {
+    await this.authRepository.deleteRefreshToken(userId);
+  }
 }

@@ -102,4 +102,22 @@ export class AuthController {
       maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
     });
   }
+
+  //* 로그아웃
+  @Post('/logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Req() req: CustomRequest, @Res({ passthrough: true }) res) {
+    const userId: number = req.user.userId;
+
+    // DB에서 리프레시 토큰 삭제
+    await this.authService.deleteAccessRefreshToken(userId);
+
+    // 쿠키에서 리프레시 토큰 삭제
+    res.clearCookie('refreshToken');
+
+    // 쿠키에서 액세스 토큰 삭제
+    res.clearCookie('Authorization');
+
+    return { message: '로그아웃에 성공했습니다.' };
+  }
 }
