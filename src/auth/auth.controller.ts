@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { KakaoUser, KakaoUserAfterAuth } from './util/decorator/user.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RefreshTokenGuard } from './refresh-auth.guard';
+import { Response } from 'express';
 
 //! 파일로 분리
 interface CustomRequest extends Request {
@@ -51,17 +52,19 @@ export class AuthController {
 
     //* 토큰 쿠키로 전송
     res.cookie('Authorization', `Bearer ${accessToken}`, {
+      domain: process.env.FRONT_HOST,
       httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       sameSite: 'none',
       secure: true,
-      maxAge: 18000, // 쿠키 만료 시간 설정 (예: 1시간)
+      maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
     });
 
     res.cookie('refreshToken', `Bearer ${refreshToken}`, {
+      domain: process.env.FRONT_HOST,
       httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
       sameSite: 'none',
       secure: true,
-      maxAge: 18000, // 쿠키 만료 시간 설정 (예: 1시간)
+      maxAge: 604800000, // 쿠키 만료 시간을 7일로 설정
     });
 
     const redirect_url = `${process.env.CLIENT_URL}`;
@@ -71,12 +74,32 @@ export class AuthController {
     res.redirect(redirect_url);
   }
 
+  // //* refresh 토큰 - 액세스토큰 재발급
+  // @Post('/refresh')
+  // @UseGuards(RefreshTokenGuard)
+  // async refreshToken(@Req() req: CustomRequest): Promise<object> {
+  //   console.log('유저확인', req.user);
+  //   const userId: number = req.user.userId;
+  //   return await this.authService.createNewAccessToken(userId);
+  // }
+
   //* refresh 토큰 - 액세스토큰 재발급
   @Post('/refresh')
   @UseGuards(RefreshTokenGuard)
-  async refreshToken(@Req() req: CustomRequest): Promise<object> {
+  async refreshToken(
+    @Req() req: CustomRequest,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<void> {
     console.log('유저확인', req.user);
     const userId: number = req.user.userId;
-    return await this.authService.createNewAccessToken(userId);
+    const { accessToken } = await this.authService.createNewAccessToken(userId);
+
+    //newAccessToken을 쿠키로 전송
+    res.cookie('Authorization', `Bearer ${accessToken}`, {
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      sameSite: 'none',
+      secure: true,
+      maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
+    });
   }
 }

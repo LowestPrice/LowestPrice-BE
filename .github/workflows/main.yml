@@ -64,6 +64,7 @@ jobs:
           echo KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} >> .env
           echo KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }} >> .env
           echo CLIENT_URL=${{ secrets.CLIENT_URL }} >> .env
+          echo FRONT_HOST=${{ secrets.FRONT_HOST }} >> .env
 
           echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
           echo JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} >> .env
