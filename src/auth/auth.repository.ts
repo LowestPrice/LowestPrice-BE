@@ -26,9 +26,20 @@ export class AuthRepository {
 
   //* 카카오 로그인 계정 생성
   async createKakaoUser(user: KakaoUserAfterAuth) {
+    if (user.email != null) {
+      return await this.prisma.user.create({
+        data: {
+          email: user.email,
+          nickname: user.nickname,
+          snsId: user.snsId,
+          provider: user.provider,
+          image: user.image,
+        },
+      });
+    }
+
     return await this.prisma.user.create({
       data: {
-        email: user.email,
         nickname: user.nickname,
         snsId: user.snsId,
         provider: user.provider,
