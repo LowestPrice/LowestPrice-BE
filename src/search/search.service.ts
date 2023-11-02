@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SearchRepository } from './search.repository';
+import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 
 @Injectable()
 export class SearchService {
@@ -115,9 +116,16 @@ export class SearchService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    // 기존 - 페이지네이션을 위해 마지막으로 조회한 상품이 없다면 undefined 반환
     if (Object.entries(parseProducts).length === 0) {
       return { undefined };
     }
+
+    // // 페이지네이션 & 에러처리를 위한 방식 변경
+    // if (Object.entries(parseProducts).length === 0) {
+    //   throw new NotFoundProductException();
+    // }
+
 
     return { data: parseProducts };
   }
