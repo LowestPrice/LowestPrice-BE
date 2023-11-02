@@ -3,12 +3,15 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-kakao';
 
-export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
+export class TestKakaoStrategy extends PassportStrategy(
+  Strategy,
+  'test-kakao'
+) {
   constructor() {
     super({
       clientID: process.env.KAKAO_CLIENT_ID,
       clientSecret: process.env.KAKAO_CLIENT_SECRET,
-      callbackURL: process.env.KAKAO_CALLBACK_URL, //리다이렉트 url
+      callbackURL: process.env.DEV_KAKAO_CALLBACK_URL, //리다이렉트 url
       scope: ['account_email', 'profile_nickname', 'profile_image'], //* 이메일은 필수 x
     });
   }
