@@ -65,6 +65,8 @@ jobs:
           echo KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }} >> .env
           echo CLIENT_URL=${{ secrets.CLIENT_URL }} >> .env
           echo FRONT_HOST=${{ secrets.FRONT_HOST }} >> .env
+          echo DEV_CLIENT_URL=${{ secrets.DEV_CLIENT_URL }} >> .env
+          echo DEV_KAKAO_CALLBACK_URL=${{ secrets.DEV_KAKAO_CALLBACK_URL }} >> .env
 
           echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
           echo JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} >> .env
@@ -75,6 +77,10 @@ jobs:
           echo EMAILPASSWORD=${{ secrets.EMAILPASSWORD }} >> .env
           echo EMAILHOST=${{ secrets.EMAILHOST }} >> .env
           echo EMAIIPORT=${{ secrets.EMAIIPORT }} >> .env
+
+          echo SERVICE_APP_ADMIN_KEY=${{ secrets.SERVICE_APP_ADMIN_KEY }} >> .env
+          echo KAKAO_UNLINK_URI=${{ secrets.KAKAO_UNLINK_URI }} >> .env
+          echo KAKAO_LOGOUT_URL=${{ secrets.KAKAO_LOGOUT_URL }} >> .env
 
       # S3로 업로드 할 프로젝트 압축 파일 생성
       - name: make .zip file
