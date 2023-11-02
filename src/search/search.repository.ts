@@ -43,7 +43,6 @@ export class SearchRepository {
     // 페이징 처리를 위한 커서 기반의 페이지네이션
     let cursorCondition = {};
 
-
     if (lastId) {
       cursorCondition = {
         cursor: {
@@ -54,6 +53,8 @@ export class SearchRepository {
         skip: 1,
       };
     }
+
+    console.log('lastId 있으면?', lastId);
 
     //* 검색결과 조회시 AND 조건으로 조회
     const products = await this.prisma.product.findMany({
@@ -86,10 +87,12 @@ export class SearchRepository {
       },
     });
 
-    // if (products.length === 0) {
-    //   // 검색 결과가 없으면 예외 발생
-    //   throw new NotFoundProductException;
-    // }
+    if (products.length === 0) {
+      // 검색 결과가 없으면 예외 발생
+      if (lastId == null) {
+        throw new NotFoundProductException();
+      }
+    }
 
     return products;
   }
@@ -191,6 +194,13 @@ export class SearchRepository {
         },
       },
     });
+
+    if (products.length === 0) {
+      // 검색 결과가 없으면 예외 발생
+      if (lastId == null) {
+        throw new NotFoundProductException();
+      }
+    }
 
     return products;
   }
