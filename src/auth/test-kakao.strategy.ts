@@ -3,7 +3,10 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-kakao';
 
-export class TestKakaoStrategy extends PassportStrategy(Strategy, 'test-kakao') {
+export class TestKakaoStrategy extends PassportStrategy(
+  Strategy,
+  'test-kakao'
+) {
   constructor() {
     super({
       clientID: process.env.KAKAO_CLIENT_ID,
