@@ -30,7 +30,7 @@ export class AuthController {
   ) {}
 
   //* 로그아웃
-  @Post('/kakao/logout')
+  @Post('/logout')
   @UseGuards(JwtAuthGuard)
   async kakaoLogout(@Req() req: CustomRequest) {
     const userId: number = req.user.userId;
