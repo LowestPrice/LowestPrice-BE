@@ -8,7 +8,7 @@ export const KakaoUser = createParamDecorator(
 );
 
 export interface KakaoUserAfterAuth {
-  email: string;
+  email: string | null;
   snsId: string;
   nickname: string;
   provider: string;
