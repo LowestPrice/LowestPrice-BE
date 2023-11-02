@@ -8,6 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { JwtConfigService } from 'src/common/config/jwt.config.service';
 import { AuthRepository } from './auth.repository';
 import { RefreshTokenStrategy } from './refresh.strategy';
+import { TestKakaoStrategy } from './test-kakao.strategy';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RefreshTokenStrategy } from './refresh.strategy';
     KakaoStrategy,
     JwtStrategy,
     RefreshTokenStrategy,
+    TestKakaoStrategy,
   ],
   exports: [JwtStrategy, JwtConfigService],
 })

@@ -14,6 +14,7 @@ import { KakaoUser, KakaoUserAfterAuth } from './util/decorator/user.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RefreshTokenGuard } from './refresh-auth.guard';
 import { Response } from 'express';
+import { TestKakaoAuthGuard } from './test-kakao-auth.guard';
 
 //! 파일로 분리
 interface CustomRequest extends Request {
@@ -75,7 +76,7 @@ export class AuthController {
   }
 
   //* 프론트 작업시 임시 카카오 로그인 API  - 콜백 url 지정
-  @UseGuards(AuthGuard('test-kakao'))
+  @UseGuards(TestKakaoAuthGuard)
   @Get('api/kakao/temporary-login')
   async temporayKakaoLogin(
     @KakaoUser() kakaoUser: KakaoUserAfterAuth,
