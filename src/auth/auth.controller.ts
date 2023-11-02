@@ -28,6 +28,14 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
+  //* 로그아웃
+  @Post('/kakao/logout')
+  @UseGuards(JwtAuthGuard)
+  async kakaoLogout(@Req() req: CustomRequest) {
+    const userId: number = req.user.userId;
+    return this.authService.deleteAccessRefreshToken(userId);
+  }
+
   //* 회원탈퇴
   @Delete('/kakao/deactivate')
   @UseGuards(JwtAuthGuard)
@@ -48,99 +56,58 @@ export class AuthController {
       await this.authService.kakaoLogin(kakaoUser);
 
     //* query string 형태로 토큰 전송
-    const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
+    //const redirect_url = `${process.env.CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
 
     //* 토큰 쿠키로 전송
-    // res.cookie('Authorization', `Bearer ${accessToken}`, {
-    //   domain: process.env.FRONT_HOST,
-    //   httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-    //   sameSite: 'none',
-    //   secure: true,
-    //   maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
-    // });
+    res.cookie('Authorization', `Bearer ${accessToken}`, {
+      domain: process.env.FRONT_HOST,
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      sameSite: 'none',
+      secure: true,
+      maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
+    });
 
-    // res.cookie('refreshToken', `Bearer ${refreshToken}`, {
-    //   domain: process.env.FRONT_HOST,
-    //   httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-    //   sameSite: 'none',
-    //   secure: true,
-    //   maxAge: 604800000, // 쿠키 만료 시간을 7일로 설정
-    // });
+    res.cookie('refreshToken', `Bearer ${refreshToken}`, {
+      domain: process.env.FRONT_HOST,
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      sameSite: 'none',
+      secure: true,
+      maxAge: 604800000, // 쿠키 만료 시간을 7일로 설정
+    });
 
-    // const redirect_url = `${process.env.CLIENT_URL}`;
+    const redirect_url = `${process.env.CLIENT_URL}`;
     console.log(redirect_url); // 백엔드에서 확인
 
     //* 2. 프론트로 redirect
     res.redirect(redirect_url);
-  }
-
-  //* 프론트 작업시 임시 카카오 로그인 API  - 콜백 url 지정
-  @UseGuards(AuthGuard('test-kakao'))
-  @Get('api/kakao/temporary-login')
-  async temporayKakaoLogin(
-    @KakaoUser() kakaoUser: KakaoUserAfterAuth,
-    @Res({ passthrough: true }) res
-  ): Promise<void> {
-    //* 1. acessToken 발급, refreshToken 발급
-    const { accessToken, refreshToken } =
-      await this.authService.kakaoLogin(kakaoUser);
-
-    //* query string 형태로 토큰 전송
-    const redirect_url = `${process.env.DEV_CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
-
-    console.log(redirect_url); // 백엔드에서 확인
-
-    //* 2. 프론트로 redirect
-    res.redirect(redirect_url);
-  }
-
-  //* refresh 토큰 - 액세스토큰 재발급
-  @Post('/refresh')
-  @UseGuards(RefreshTokenGuard)
-  async refreshToken(@Req() req: CustomRequest): Promise<object> {
-    console.log('유저확인', req.user);
-    const userId: number = req.user.userId;
-    return await this.authService.createNewAccessToken(userId);
   }
 
   // //* refresh 토큰 - 액세스토큰 재발급
   // @Post('/refresh')
   // @UseGuards(RefreshTokenGuard)
-  // async refreshToken(
-  //   @Req() req: CustomRequest,
-  //   @Res({ passthrough: true }) res: Response
-  // ): Promise<void> {
+  // async refreshToken(@Req() req: CustomRequest): Promise<object> {
   //   console.log('유저확인', req.user);
   //   const userId: number = req.user.userId;
-  //   const { accessToken } = await this.authService.createNewAccessToken(userId);
-
-  //   //newAccessToken을 쿠키로 전송
-  //   res.cookie('Authorization', `Bearer ${accessToken}`, {
-  //     httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
-  //     sameSite: 'none',
-  //     secure: true,
-  //     maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
-  //   });
+  //   return await this.authService.createNewAccessToken(userId);
   // }
 
-  // //* 로그아웃
-  // @Post('/logout')
-  // @UseGuards(JwtAuthGuard)
-  // async logout(@Req() req: CustomRequest, @Res({ passthrough: true }) res) {
-  //   const userId: number = req.user.userId;
+  //* refresh 토큰 - 액세스토큰 재발급
+  @Post('/refresh')
+  @UseGuards(RefreshTokenGuard)
+  async refreshToken(
+    @Req() req: CustomRequest,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<void> {
+    console.log('유저확인', req.user);
+    const userId: number = req.user.userId;
+    const { accessToken } = await this.authService.createNewAccessToken(userId);
 
-  //   // DB에서 리프레시 토큰 삭제
-  //   await this.authService.deleteAccessRefreshToken(userId);
-
-  //   // 쿠키에서 리프레시 토큰 삭제
-  //   res.clearCookie('refreshToken', {
-  //     domain: process.env.FRONT_HOST, // 도메인 설정 추가
-  //   });
-
-  //   // 쿠키에서 액세스 토큰 삭제
-  //   res.clearCookie('Authorization', {
-  //     domain: process.env.FRONT_HOST, // 도메인 설정 추가
-  //   });
-  //   return { message: '로그아웃에 성공했습니다.' };
-  // }
+    //newAccessToken을 쿠키로 전송
+    res.cookie('Authorization', `Bearer ${accessToken}`, {
+      httpOnly: false, // JavaScript에서 쿠키에 접근할 수 없도록 설정
+      sameSite: 'none',
+      secure: true,
+      maxAge: 18000000, // 쿠키 만료 시간을 5시간으로 설정
+    });
+  }
 }
