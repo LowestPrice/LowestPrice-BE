@@ -85,7 +85,6 @@ export class AuthService {
   //* 회원 탈퇴
   async kakaoDeactivate(userId: number) {
     const user: User = await this.authRepository.kakaoDeactivate(userId);
-    console.log(user);
     const unlink_res = await axios.post(
       process.env.KAKAO_UNLINK_URI,
       {
@@ -108,10 +107,27 @@ export class AuthService {
 
   //* 로그아웃
   async deleteAccessRefreshToken(userId: number) {
-    await this.authRepository.deleteRefreshToken(userId);
-    const unlink_res = await axios.get(
-      `https://kauth.kakao.com/oauth/logout?client_id=${process.env.KAKAO_CLIENT_ID}&logout_redirect_uri=${process.env.KAKAO_LOGOUT_URL}`
+    const user: User = await this.authRepository.deleteRefreshToken(userId);
+    // console.log(`로그아웃1`);
+    // const unlink_res = await axios.get(
+    //   `https://kauth.kakao.com/oauth/logout?client_id=${process.env.KAKAO_CLIENT_ID}&logout_redirect_uri=${process.env.KAKAO_LOGOUT_URL}`
+    // );
+
+    // console.log(`로그아웃2`);
+    const unlink_res = await axios.post(
+      process.env.KAKAO_LOGOUT_URL,
+      {
+        target_id_type: 'user_id',
+        target_id: Number(user.snsId),
+      },
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `KakaoAK ${process.env.SERVICE_APP_ADMIN_KEY}`,
+        },
+      }
     );
+
     return {
       success: 'success',
       status: 200,
