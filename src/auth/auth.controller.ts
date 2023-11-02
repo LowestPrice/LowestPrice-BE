@@ -74,6 +74,26 @@ export class AuthController {
     res.redirect(redirect_url);
   }
 
+  //* 프론트 작업시 임시 카카오 로그인 API  - 콜백 url 지정
+  @UseGuards(AuthGuard('kakao'))
+  @Get('api/kakao/temporary-login')
+  async temporayKakaoLogin(
+    @KakaoUser() kakaoUser: KakaoUserAfterAuth,
+    @Res({ passthrough: true }) res
+  ): Promise<void> {
+    //* 1. acessToken 발급, refreshToken 발급
+    const { accessToken, refreshToken } =
+      await this.authService.kakaoLogin(kakaoUser);
+
+    //* query string 형태로 토큰 전송
+    const redirect_url = `${process.env.DEV_CLIENT_URL}/kakaologin?Authorization=${accessToken}&&refreshToken=${refreshToken}`;
+
+    console.log(redirect_url); // 백엔드에서 확인
+
+    //* 2. 프론트로 redirect
+    res.redirect(redirect_url);
+  }
+
   //* refresh 토큰 - 액세스토큰 재발급
   @Post('/refresh')
   @UseGuards(RefreshTokenGuard)
