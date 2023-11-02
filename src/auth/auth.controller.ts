@@ -75,7 +75,7 @@ export class AuthController {
   }
 
   //* 프론트 작업시 임시 카카오 로그인 API  - 콜백 url 지정
-  @UseGuards(AuthGuard('kakao'))
+  @UseGuards(AuthGuard('test-kakao'))
   @Get('api/kakao/temporary-login')
   async temporayKakaoLogin(
     @KakaoUser() kakaoUser: KakaoUserAfterAuth,
