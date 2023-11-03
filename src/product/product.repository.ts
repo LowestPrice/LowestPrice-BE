@@ -131,6 +131,11 @@ export class ProductRepository {
           {
             isOutOfStock: false, // 품절이 아닌 상품만 조회
           },
+          {
+            currentPrice: {
+              gte: 850000, // currentPrice가 1,000,000 이상인 상품만 조회
+            },
+          },
         ],
       },
       orderBy: {

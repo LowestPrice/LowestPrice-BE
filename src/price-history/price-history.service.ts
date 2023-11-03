@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { subWeeks, format } from 'date-fns'; // format 함수를 import
+import { subMonths, format } from 'date-fns'; // format 함수를 import
 
 @Injectable()
 export class PriceHistoryService {
   constructor(private prisma: PrismaService) {}
 
   async findPriceHistoryByProductId(productId: number) {
-    const oneWeekAgo = subWeeks(new Date(), 1);
+    const oneMonthAgo = subMonths(new Date(), 1);
 
     // 지난 1주일간 동안의 가격 이력을 조회
     const priceHistories = await this.prisma.priceHistory.findMany({
       where: {
         ProductId: productId,
         createdAt: {
-          gte: oneWeekAgo,
+          gte: oneMonthAgo,
         },
       },
       orderBy: { createdAt: 'asc' },
