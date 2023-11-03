@@ -201,6 +201,11 @@ export class ProductRepository {
       NOT: {
         discountRate: null, // null 값인 상품은 제외
       },
+      AND: {
+        currentPrice: {
+          gt: 90000, // currentPrice가 90,000원 초과인 상품만 포함
+        },
+      },
     };
 
     const additionalCondition = [];
@@ -259,6 +264,14 @@ export class ProductRepository {
         },
       },
     });
+
+    // ProductCategory가 여러개인 상품만 필터링
+    // const severalCategoryProducts = products.filter(
+    //   (product) => product.ProductCategory.length > 1
+    // );
+
+    // console.log('severalCategoryProducts: ', severalCategoryProducts);
+    // return severalCategoryProducts;
 
     // 해당 카테고리에 제품이 없으면 빈 배열을 반환합니다.
     console.log('products: ', products);
