@@ -7,6 +7,8 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtConfigService } from 'src/common/config/jwt.config.service';
 import { AuthRepository } from './auth.repository';
+import { RefreshTokenStrategy } from './refresh.strategy';
+import { TestKakaoStrategy } from './test-kakao.strategy';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { AuthRepository } from './auth.repository';
     JwtConfigService,
     KakaoStrategy,
     JwtStrategy,
+    RefreshTokenStrategy,
+    TestKakaoStrategy,
   ],
   exports: [JwtStrategy, JwtConfigService],
 })

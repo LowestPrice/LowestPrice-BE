@@ -26,9 +26,20 @@ export class AuthRepository {
 
   //* 카카오 로그인 계정 생성
   async createKakaoUser(user: KakaoUserAfterAuth) {
+    if (user.email != null) {
+      return await this.prisma.user.create({
+        data: {
+          email: user.email,
+          nickname: user.nickname,
+          snsId: user.snsId,
+          provider: user.provider,
+          image: user.image,
+        },
+      });
+    }
+
     return await this.prisma.user.create({
       data: {
-        email: user.email,
         nickname: user.nickname,
         snsId: user.snsId,
         provider: user.provider,
@@ -49,11 +60,35 @@ export class AuthRepository {
     });
   }
 
+  //* 사용자의 refresh 토큰 조회
+  async findRefresh(userId: number) {
+    return await this.prisma.user.findFirst({
+      where: {
+        userId: userId,
+      },
+      select: {
+        refreshToken: true,
+      },
+    });
+  }
+
   //* 회원탈퇴
   async kakaoDeactivate(userId: number) {
     return await this.prisma.user.delete({
       where: {
         userId: userId,
+      },
+    });
+  }
+
+  //* 로그아웃
+  async deleteRefreshToken(userId: number) {
+    return await this.prisma.user.update({
+      where: {
+        userId: userId,
+      },
+      data: {
+        refreshToken: null,
       },
     });
   }

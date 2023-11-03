@@ -10,7 +10,11 @@ export class SearchRepository {
   constructor(private prisma: PrismaService) {}
 
   //* 검색어가 포함된 상품을 조회
-  async searchProduct(search: string, userId: number, isOutOfStock: boolean) {
+  async searchProduct(
+    search: string,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
+    isOutOfStock: boolean
+  ) {
     // 공백을 기준으로 검색어를 각각 분리해서 배열로 만듬
     const searchWords = search.split(' ');
     // 검색어가 포함된 상품을 찾기 위한 조건
@@ -36,9 +40,27 @@ export class SearchRepository {
       whereCondition.isOutOfStock = false;
     }
 
+    // 페이징 처리를 위한 커서 기반의 페이지네이션
+    let cursorCondition = {};
+
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
+    console.log('lastId 있으면?', lastId);
+
     //* 검색결과 조회시 AND 조건으로 조회
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      ...cursorCondition,
+      take: 8,
       select: {
         productId: true,
         coupangItemId: true,
@@ -66,7 +88,10 @@ export class SearchRepository {
     });
 
     if (products.length === 0) {
-      throw new NotFoundProductException();
+      // 검색 결과가 없으면 예외 발생
+      if (lastId == null) {
+        throw new NotFoundProductException();
+      }
     }
 
     return products;
@@ -76,6 +101,7 @@ export class SearchRepository {
   async searchProductByFilter(
     search: string,
     filter: string,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
     isOutOfStock: boolean
   ) {
     const searchWords = search.split(' ');
@@ -123,8 +149,25 @@ export class SearchRepository {
         throw new NotFoundSearchFilterException();
     }
 
+    // 페이징 처리를 위한 커서 기반의 페이지네이션
+    let cursorCondition = {};
+
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      ...cursorCondition,
+      // 8개의 상품만 조회
+      take: 8,
       orderBy: orderBy, // 정렬 조건
       select: {
         productId: true,
@@ -153,7 +196,10 @@ export class SearchRepository {
     });
 
     if (products.length === 0) {
-      throw new NotFoundProductException();
+      // 검색 결과가 없으면 예외 발생
+      if (lastId == null) {
+        throw new NotFoundProductException();
+      }
     }
 
     return products;

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SearchRepository } from './search.repository';
+import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
 
 @Injectable()
 export class SearchService {
@@ -59,12 +60,35 @@ export class SearchService {
       search = search.replace('아이패드 미니', '아이패드 mini');
     }
 
+    // 매직 키보드, 매직 마우스 등과 같은 단어를 정확한 상품명으로 변환하는 매핑
+    const mappings = {
+      매직키보드: 'Magic Keyboard',
+      매직마우스: 'Magic Mouse',
+      마우스: 'Mouse',
+      트랙패드: 'Trackpad',
+      매직트랙패드: 'Magic Trackpad',
+      키보드: 'Keyboard',
+      울트라: 'Ultra',
+    };
+
+    // 매핑된 단어를 변환
+    Object.entries(mappings).forEach(([key, value]) => {
+      //정규 표현식에서 gi 플래그를 사용하여 대소문자를 무시
+      const regex = new RegExp(key, 'gi');
+      search = search.replace(regex, value);
+    });
+
     console.log(`transformed search: ${search}`);
     return search;
   }
 
   //* 상품 검색
-  async searchProduct(search: string, userId: number, isOutOfStock: string) {
+  async searchProduct(
+    search: string,
+    userId: number,
+    lastId: number | null,
+    isOutOfStock: string
+  ) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
     // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
     const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
@@ -74,7 +98,7 @@ export class SearchService {
 
     const products = await this.searchRepository.searchProduct(
       transformedSearch,
-      userId,
+      lastId,
       isOutOfStockBoolean
     );
 
@@ -92,6 +116,17 @@ export class SearchService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    // 기존 - 페이지네이션을 위해 마지막으로 조회한 상품이 없다면 undefined 반환
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
+
+    // // 페이지네이션 & 에러처리를 위한 방식 변경
+    // if (Object.entries(parseProducts).length === 0) {
+    //   throw new NotFoundProductException();
+    // }
+
+
     return { data: parseProducts };
   }
 
@@ -100,6 +135,7 @@ export class SearchService {
     search: string,
     filter: string,
     userId: number,
+    lastId: number | null,
     isOutOfStock: string
   ) {
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
@@ -112,6 +148,7 @@ export class SearchService {
     const products = await this.searchRepository.searchProductByFilter(
       transformedSearch,
       filter,
+      lastId,
       isOutOfStockBoolean
     );
 
@@ -128,6 +165,10 @@ export class SearchService {
 
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
+
+    if (Object.entries(parseProducts).length === 0) {
+      return { undefined };
+    }
 
     return { data: parseProducts };
   }

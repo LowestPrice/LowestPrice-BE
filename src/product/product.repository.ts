@@ -1,5 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
+import { add } from 'date-fns';
 import {
   NotFoundCategoryException,
   NotFoundCategoryFilterException,
@@ -9,6 +10,63 @@ import {
 @Injectable()
 export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  //* 상품 랜덤 조회
+  async getRandomProducts(isOutOfStock: boolean) {
+    // 조건에 따라 whereCondition 객체에 추가
+    // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
+    type WhereConditionType = {
+      isOutOfStock?: boolean;
+    };
+    let whereCondition: WhereConditionType = {};
+
+    // 만약 isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)에만 whereCondition 객체에 추가
+    if (isOutOfStock === false) {
+      whereCondition.isOutOfStock = false;
+    }
+
+    const pageSize = 8;
+    let ids: number[] = [];
+
+    const results = await this.prisma.$queryRawUnsafe<{ productId: number }[]>(
+      `SELECT productId FROM Product WHERE isOutOfStock = ${isOutOfStock} ORDER BY RAND() LIMIT ${pageSize};`
+    );
+
+    console.log('results1: ', results);
+
+    ids = results.map((item) => item.productId);
+
+    const products = await this.prisma.product.findMany({
+      where: { AND: [{ productId: { in: ids } }, whereCondition] },
+      select: {
+        productId: true,
+        coupangItemId: true,
+        coupangVendorId: true,
+        productName: true,
+        productImage: true,
+        isOutOfStock: true,
+        originalPrice: true,
+        currentPrice: true,
+        discountRate: true,
+        cardDiscount: true,
+        createdAt: true,
+        updatedAt: true,
+        ProductCategory: {
+          select: {
+            Category: {
+              select: {
+                categoryId: true,
+                categoryName: true,
+              },
+            },
+          },
+        },
+      },
+      take: pageSize,
+    });
+
+    return products;
+  }
 
   //* 상품 전체 조회
   async getAllProducts(userId: number, isOutOfStock: boolean) {
@@ -73,6 +131,11 @@ export class ProductRepository {
           {
             isOutOfStock: false, // 품절이 아닌 상품만 조회
           },
+          {
+            currentPrice: {
+              gte: 850000, // currentPrice가 1,000,000 이상인 상품만 조회
+            },
+          },
         ],
       },
       orderBy: {
@@ -115,9 +178,10 @@ export class ProductRepository {
   //* 상품 카테고리별 조회
   async getProductsByCategory(
     categoryName: string,
-    userId: number,
+    lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
     isOutOfStock: boolean
   ) {
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const categoryExists = await this.prisma.category.findUnique({
       where: { categoryName: categoryName },
     });
@@ -149,8 +213,27 @@ export class ProductRepository {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    let cursorCondition = {};
+
+    const isFirstPage = !lastId;
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      take: 8,
+      ...(!isFirstPage && cursorCondition),
       select: {
         productId: true,
         coupangItemId: true,
@@ -177,32 +260,8 @@ export class ProductRepository {
       },
     });
 
-    // 해당카테고리에 제품이 없으면 Not Found 예외처리
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
-
-    // // 각 상품의 알림 상태를 확인하고 추가
-    // const productsWithNotificationStatus: object[] = await Promise.all(
-    //   products.map(async (product) => {
-    //     let isAlertOn = false;
-    //     if (userId) {
-    //       const notification = await this.prisma.userProduct.findFirst({
-    //         where: {
-    //           UserId: userId,
-    //           ProductId: product.productId,
-    //         },
-    //       });
-    //       if (notification) isAlertOn = true;
-    //     }
-    //     return {
-    //       ...product,
-    //       isAlertOn: isAlertOn,
-    //     };
-    //   })
-    // );
-
-    // return productsWithNotificationStatus;
+    // 해당 카테고리에 제품이 없으면 빈 배열을 반환합니다.
+    console.log('products: ', products);
     return products;
   }
 
@@ -210,7 +269,7 @@ export class ProductRepository {
   async getProductsByCategoryAndFilter(
     categoryName: string,
     filter: string,
-    userId: number,
+    lastId: number | null,
     isOutOfStock: boolean
   ) {
     const categoryExists = await this.prisma.category.findUnique({
@@ -266,8 +325,24 @@ export class ProductRepository {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    let cursorCondition = {};
+
+    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    if (lastId) {
+      cursorCondition = {
+        cursor: {
+          // 마지막으로 조회한 상품의 ID
+          productId: lastId,
+        },
+        // 커서의 상품을 건너뜁니다.
+        skip: 1,
+      };
+    }
+
     const products = await this.prisma.product.findMany({
       where: whereCondition,
+      ...cursorCondition,
+      take: 8,
       orderBy: orderBy,
       select: {
         productId: true,
@@ -294,10 +369,6 @@ export class ProductRepository {
         },
       },
     });
-
-    if (products.length === 0) {
-      throw new NotFoundProductException();
-    }
 
     return products;
   }

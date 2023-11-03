@@ -69,7 +69,10 @@ export class MagazineService {
       userId
     );
 
-    return { data: parseLikeMagazines };
+    return {
+      data: parseLikeMagazines,
+      access: userId === Number(process.env.ADMIN) ? true : false,
+    };
   }
 
   async findOne(magazineId: number, userId: number): Promise<object> {
@@ -101,7 +104,10 @@ export class MagazineService {
       userId
     );
 
-    return { data: parseLikeMagazine };
+    return {
+      data: parseLikeMagazine,
+      access: userId === Number(process.env.ADMIN) ? true : false,
+    };
   }
 
   async update(
@@ -155,14 +161,11 @@ export class MagazineService {
       throw new NotFoundMagzineException();
     }
 
-    const magazines: Object[] | null = await this.prisma.magazine.findMany({
+    const magazinesAfter = await this.prisma.magazine.findMany({
       where: {
-        NOT: {
-          magazineId: magazineId,
+        magazineId: {
+          gt: magazineId,
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
       },
       select: {
         magazineId: true,
@@ -177,7 +180,46 @@ export class MagazineService {
           },
         },
       },
+      take: 2, // Get 2 records before the specific record
+      orderBy: {
+        createdAt: 'asc', // Order by id in descending order to get records before the specific record
+      },
     });
+
+    const magazinesBefore = await this.prisma.magazine.findMany({
+      where: {
+        magazineId: {
+          lt: magazineId,
+        },
+      },
+      select: {
+        magazineId: true,
+        title: true,
+        content: true,
+        mainImage: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            LikeMagazine: true,
+          },
+        },
+      },
+      take: 2, // Get 2 records before the specific record
+      orderBy: {
+        createdAt: 'desc', // Order by id in descending order to get records before the specific record
+      },
+    });
+
+    //* 매거진 정렬
+    const magazines: object[] = [...magazinesAfter, ...magazinesBefore].sort(
+      (a: any, b: any) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+
+        return dateA < dateB ? 1 : dateA > dateB ? -1 : 0;
+      }
+    );
 
     const parseLikeMagazines: object[] = await this.parseLikeMagazinesModel(
       magazines,
