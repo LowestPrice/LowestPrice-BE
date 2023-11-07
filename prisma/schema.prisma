@@ -97,6 +97,8 @@ model Product {
   PriceHistory    PriceHistory[]
   UserProduct     UserProduct[]
   ProductCategory ProductCategory[]
+
+  @@index([productName], name: "productName_index")
 }
 
 model PriceHistory {
