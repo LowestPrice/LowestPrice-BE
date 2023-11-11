@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, NotFoundException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
 import { add } from 'date-fns';
 import {
@@ -6,6 +6,7 @@ import {
   NotFoundCategoryFilterException,
   NotFoundProductException,
 } from 'src/common/exceptions/custom-exception';
+import { shuffle } from 'lodash';
 
 @Injectable()
 export class ProductRepository {
@@ -113,9 +114,10 @@ export class ProductRepository {
     return products;
   }
 
-  //* 상품 상위10개 조회
+  //* 상품 상위 10개 랜덤 조회
   async getTop10Products(userId: number) {
-    const products = await this.prisma.product.findMany({
+    // 할인율이 높은 상품 50개 조회
+    const topProducts = await this.prisma.product.findMany({
       where: {
         AND: [
           {
@@ -131,12 +133,17 @@ export class ProductRepository {
           {
             isOutOfStock: false, // 품절이 아닌 상품만 조회
           },
+          {
+            currentPrice: {
+              gte: 250000, // currentPrice가 850,000 이상인 상품만 조회
+            },
+          },
         ],
       },
       orderBy: {
-        discountRate: 'desc',
+        discountRate: 'desc', // 할인율이 높은 순으로 정렬
       },
-      take: 10,
+      take: 50, // 상위 50개만 가져오기
       select: {
         productId: true,
         coupangItemId: true,
@@ -163,11 +170,14 @@ export class ProductRepository {
       },
     });
 
-    if (products.length === 0) {
-      throw new NotFoundProductException();
+    if (topProducts.length === 0) {
+      throw new NotFoundException('No products found.');
     }
 
-    return products;
+    // lodash의 shuffle 함수를 사용하여 배열을 랜덤하게 섞은 후, 앞에서부터 10개를 선택
+    const randomProducts = shuffle(topProducts).slice(0, 10);
+
+    return randomProducts;
   }
 
   //* 상품 카테고리별 조회
@@ -195,6 +205,11 @@ export class ProductRepository {
       },
       NOT: {
         discountRate: null, // null 값인 상품은 제외
+      },
+      AND: {
+        currentPrice: {
+          gt: 90000, // currentPrice가 90,000원 초과인 상품만 포함
+        },
       },
     };
 
@@ -254,6 +269,14 @@ export class ProductRepository {
         },
       },
     });
+
+    // ProductCategory가 여러개인 상품만 필터링
+    // const severalCategoryProducts = products.filter(
+    //   (product) => product.ProductCategory.length > 1
+    // );
+
+    // console.log('severalCategoryProducts: ', severalCategoryProducts);
+    // return severalCategoryProducts;
 
     // 해당 카테고리에 제품이 없으면 빈 배열을 반환합니다.
     console.log('products: ', products);

@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -40,5 +41,26 @@ export class NotificationController {
   ): Promise<object> {
     const userId: number = req.user.userId;
     return this.notificationSevice.setNotification(userId, productId);
+  }
+
+  //* 알림 내역 조회
+  @Get('/history')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(UnauthorizedExceptionFilter)
+  getNotification(@Req() req: CustomRequest): Promise<object> {
+    const userId: number = req.user.userId;
+    return this.notificationSevice.getNotification(userId);
+  }
+
+  //* 알림 내역 삭제
+  @Delete('/history/:alarmHistoryId')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(UnauthorizedExceptionFilter)
+  removeNotification(
+    @Req() req: CustomRequest,
+    @Param('alarmHistoryId') alarmHistoryId: number
+  ): Promise<object> {
+    const userId: number = req.user.userId;
+    return this.notificationSevice.removeNotification(userId, alarmHistoryId);
   }
 }
