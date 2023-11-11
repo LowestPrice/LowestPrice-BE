@@ -12,6 +12,7 @@ export interface KaKaoTemplate {
   nickname: string;
   phone: number;
   alarmPrice: number;
+  originalPrice: number;
   currentPrice: number;
   productName: string;
   productPartnersUrl: string;

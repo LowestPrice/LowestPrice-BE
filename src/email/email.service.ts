@@ -57,8 +57,12 @@ export class EmailService {
       });
   }
 
-  //* 카카오 알림톡 발송
-  async sendKakaoFormat(list: KaKaoTemplate, token: string): Promise<void> {
+  //* 카카오 알림톡 실제 발송
+  async sendKakaoFormat(data: KaKaoTemplate, token: string): Promise<void> {
+    //! 알림 메시지 DB에 저장
+    await this.emailRepository.saveNotification(data);
+    console.log(`알림 메시지 저장`);
+
     try {
       const kakaoAlim = await axios.post(
         `${process.env.KAKAO_ALIM_HOST}/v2/kko/sendAlimTalk `,
@@ -68,8 +72,27 @@ export class EmailService {
           resMethod: 'PUSH',
           senderKey: process.env.KAKAO_ALIM_KEY,
           tmpltCode: 'lowest-price-01',
-          message: `${list.nickname}님 안녕하세요!\n\n내일은 최저가에서 알림 설정하신 [${list.productName}]의 최저가 알림을 보내드립니다.\n\n■ 상품 : ${list.productName}\n■ 가격 : ${list.currentPrice}\n\n※ 해당 메시지는 고객님께서 요청하신 최저가 알림이 있을 경우 발송됩니다.`,
-          recipient: list.phone,
+          message: `${
+            data.nickname
+          }님 안녕하세요!\n\n내일은 최저가에서 알림 설정하신 [${
+            data.productName
+          }]의 최저가 알림을 보내드립니다.\n\n■ 상품 : ${
+            data.productName
+          }\n■ 가격 : ${Number(
+            data.currentPrice
+          ).toLocaleString()}원\n\n※ 해당 메시지는 고객님께서 요청하신 최저가 알림이 있을 경우 발송됩니다.`,
+          recipient: data.phone,
+          //! 버튼
+          // attach: {
+          //   button: [
+          //     {
+          //       name: '최저가 확인하기',
+          //       type: 'WL',
+          //       url_mobile: `https://lowest-price.store`,
+          //       // url_pc: `https://lowest-price.store/detail/${data.productId}`,
+          //     },
+          //   ],
+          // },
         },
         {
           headers: {
@@ -78,13 +101,13 @@ export class EmailService {
           },
         }
       );
-      console.log(kakaoAlim);
+      //console.log(kakaoAlim);
     } catch (err) {
       console.log(err);
     }
   }
 
-  // 카카오톡 알림 발송
+  //* 카카오톡 알림 관련 함수
   async sendNotification() {
     // 비즈톡 연결
     let token: string;
@@ -114,30 +137,6 @@ export class EmailService {
     alimList.map(async (list: KaKaoTemplate) => {
       await this.sendKakaoFormat(list, token);
     });
-
-    // try {
-    //   const kakaoAlim = await axios.post(
-    //     `${process.env.KAKAO_ALIM_HOST}/v2/kko/sendAlimTalk `,
-    //     {
-    //       msgIdx: '1',
-    //       countryCode: '82',
-    //       resMethod: 'PUSH',
-    //       senderKey: process.env.KAKAO_ALIM_KEY,
-    //       tmpltCode: 'lowest-price-01',
-    //       message: `test님 안녕하세요!\n\n내일은 최저가에서 알림 설정하신 #{상품}의 최저가 알림을 보내드립니다.\n\n■ 상품 : test\n■ 가격 : test\n\n※ 해당 메시지는 고객님께서 요청하신 최저가 알림이 있을 경우 발송됩니다.`,
-    //       recipient: 'phone number',
-    //     },
-    //     {
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'bt-token': token,
-    //       },
-    //     }
-    //   );
-    //   console.log(kakaoAlim);
-    // } catch (err) {
-    //   console.log(err);
-    // }
 
     return {
       success: 'success',
