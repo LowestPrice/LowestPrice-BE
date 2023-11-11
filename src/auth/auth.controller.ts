@@ -29,6 +29,14 @@ export class AuthController {
     private readonly authService: AuthService
   ) {}
 
+  //* 로그아웃
+  @Post('/kakao/logout')
+  @UseGuards(JwtAuthGuard)
+  async kakaoLogout(@Req() req: CustomRequest) {
+    const userId: number = req.user.userId;
+    return this.authService.deleteAccessRefreshToken(userId);
+  }
+
   //* 회원탈퇴
   @Delete('/kakao/deactivate')
   @UseGuards(JwtAuthGuard)

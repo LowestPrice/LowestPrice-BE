@@ -78,6 +78,10 @@ jobs:
           echo EMAILHOST=${{ secrets.EMAILHOST }} >> .env
           echo EMAIIPORT=${{ secrets.EMAIIPORT }} >> .env
 
+          echo SERVICE_APP_ADMIN_KEY=${{ secrets.SERVICE_APP_ADMIN_KEY }} >> .env
+          echo KAKAO_UNLINK_URI=${{ secrets.KAKAO_UNLINK_URI }} >> .env
+          echo KAKAO_LOGOUT_URL=${{ secrets.KAKAO_LOGOUT_URL }} >> .env
+
       # S3로 업로드 할 프로젝트 압축 파일 생성
       - name: make .zip file
         run: zip -qq -r ./$GITHUB_SHA.zip .
