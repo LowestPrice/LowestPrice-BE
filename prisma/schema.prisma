@@ -12,6 +12,7 @@ datasource db {
 
 model User {
   userId       Int       @id @default(autoincrement()) @map("id")
+  phone        Int?
   email        String?   
   nickname     String
   snsId        String
@@ -25,6 +26,7 @@ model User {
 
   UserProduct  UserProduct[]
   LikeMagazine LikeMagazine[]
+  AlarmHistory AlarmHistory[]
 }
 
 model Category {
@@ -97,6 +99,7 @@ model Product {
   PriceHistory    PriceHistory[]
   UserProduct     UserProduct[]
   ProductCategory ProductCategory[]
+  AlarmHistory    AlarmHistory[]
 
   @@index([productName], name: "productName_index")
 }
@@ -107,5 +110,19 @@ model PriceHistory {
   price          Int
   createdAt      DateTime @default(now())
 
+  Product Product @relation(fields: [ProductId], references: [productId], onDelete: Cascade)
+}
+
+model AlarmHistory {
+  alarmHistoryId  Int      @id @default(autoincrement()) @map("id")
+  UserId          Int
+  ProductId       Int
+  alarmPrice      Int
+  originalPrice   Int
+  currentPrice    Int
+  productName     String
+  createdAt       DateTime @default(now())
+
+  User    User    @relation(fields: [UserId], references: [userId], onDelete: Cascade)
   Product Product @relation(fields: [ProductId], references: [productId], onDelete: Cascade)
 }

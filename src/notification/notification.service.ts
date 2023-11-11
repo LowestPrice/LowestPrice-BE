@@ -1,6 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Product, UserProduct } from '@prisma/client';
-import { NotFoundProductException } from 'src/common/exceptions/custom-exception';
+import { AlarmHistory, Product, UserProduct } from '@prisma/client';
+import {
+  NotFoundNotificationException,
+  NotFoundProductException,
+} from 'src/common/exceptions/custom-exception';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -91,6 +94,47 @@ export class NotificationService {
     );
 
     return { data: parseProducts };
+  }
+
+  //* 알림 내역 조회
+  async getNotification(userId: number): Promise<object> {
+    const history: Object[] | null = await this.prisma.alarmHistory.findMany({
+      where: {
+        UserId: userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return { data: history };
+  }
+
+  //* 알림 내역 삭제
+  async removeNotification(userId: number, alarmHistoryId: number) {
+    // const isExist: AlarmHistory = await this.prisma.alarmHistory.findFirst({
+    //   where: {
+    //     alarmHistoryId: alarmHistoryId,
+    //     UserId: userId,
+    //   },
+    // });
+
+    // if (!isExist) {
+    //   throw new NotFoundNotificationException();
+    // }
+
+    try {
+      const alarm: AlarmHistory | null = await this.prisma.alarmHistory.delete({
+        where: {
+          alarmHistoryId: alarmHistoryId,
+          UserId: userId,
+        },
+      });
+    } catch (err) {
+      throw new NotFoundNotificationException();
+    }
+
+    return { message: '알림 내역 삭제에 성공했습니다.' };
   }
 
   //* 객체 한줄로 펴주기(배열)
