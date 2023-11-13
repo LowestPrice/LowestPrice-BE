@@ -108,15 +108,26 @@ export class NotificationService {
         },
       });
 
-    history.map((data: AlarmHistory) => {
-      return {
-        ...data,
-        productName: data.productName.split(',')[0],
-        productOption: data.productName.split(',')[1],
-      };
+    const optionHistory = history.map((product: AlarmHistory) => {
+      if (product.productName.includes(',')) {
+        return {
+          ...product,
+          productName: product.productName.split(',')[0],
+          productOption: product.productName
+            .split(',')
+            .slice(1)
+            .join(',')
+            .trim(),
+        };
+      } else {
+        return {
+          ...product,
+          productOption: null,
+        };
+      }
     });
 
-    return { data: history };
+    return { data: optionHistory };
   }
 
   //* 알림 내역 삭제
