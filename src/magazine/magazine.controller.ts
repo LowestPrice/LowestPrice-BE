@@ -40,8 +40,8 @@ export class MagazineController {
   create(
     @Req() req: CustomRequest,
     @UploadedFile() // new ParseFilePipeBuilder().build({
-    //   fileIsRequired: true,
-    file // })
+    // })
+    file //   fileIsRequired: true,
     : Express.Multer.File,
     @Body() createMagazineDto: CreateMagazineDto
   ) {
@@ -71,6 +71,20 @@ export class MagazineController {
   getLikes(@Req() req: CustomRequest) {
     const userId: number = req.user.userId;
     return this.magazineService.getLikes(userId);
+  }
+
+  //* 매거진 파일 업로드
+  @Post('file')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(UnauthorizedExceptionFilter)
+  @UseInterceptors(FileInterceptor('file'))
+  fileUpload(
+    @Req() req: CustomRequest,
+    @UploadedFile()
+    file: Express.Multer.File
+  ) {
+    const userId: number = req.user.userId;
+    return this.magazineService.UploadMagazineFile(userId, file);
   }
 
   //* 매거진 상세 조회

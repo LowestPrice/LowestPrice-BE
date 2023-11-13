@@ -23,7 +23,7 @@ export class EmailRepository {
   // 카카오알림용
   async getProductsWithLowerPriceKaKao(): Promise<KaKaoTemplate[]> {
     return await this.prisma.$queryRaw`
-    SELECT p.productId, p.productName, u.id AS userId, u.nickname, u.phone, up.atPrice AS alarmPrice, p.originalPrice, p.currentPrice, p.productPartnersUrl
+    SELECT p.productId, p.productName, u.id AS userId, u.nickname, u.phone, up.atPrice AS alarmPrice, p.originalPrice, p.currentPrice, p.productPartnersUrl, p.productImage
     FROM User u
     INNER JOIN UserProduct up ON u.id = up.UserId
     INNER JOIN Product p ON up.ProductId = p.productId
@@ -40,6 +40,7 @@ export class EmailRepository {
         originalPrice: data.originalPrice,
         currentPrice: data.currentPrice,
         productName: data.productName,
+        productImage: data.productImage,
       },
     });
   }
