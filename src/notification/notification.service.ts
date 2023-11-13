@@ -98,13 +98,22 @@ export class NotificationService {
 
   //* 알림 내역 조회
   async getNotification(userId: number): Promise<object> {
-    const history: Object[] | null = await this.prisma.alarmHistory.findMany({
-      where: {
-        UserId: userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const history: AlarmHistory[] | null =
+      await this.prisma.alarmHistory.findMany({
+        where: {
+          UserId: userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+    history.map((data: AlarmHistory) => {
+      return {
+        ...data,
+        productName: data.productName.split(',')[0],
+        productOption: data.productName.split(',')[1],
+      };
     });
 
     return { data: history };
