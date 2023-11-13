@@ -15,5 +15,7 @@ export interface KaKaoTemplate {
   originalPrice: number;
   currentPrice: number;
   productName: string;
+  productOption: string;
   productPartnersUrl: string;
+  productImage: string;
 }

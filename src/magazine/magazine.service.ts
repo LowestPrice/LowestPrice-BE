@@ -24,6 +24,17 @@ export class MagazineService {
     this.s3 = new AWS.S3();
   }
 
+  async UploadMagazineFile(userId: number, file: Express.Multer.File) {
+    this.checkAdmin(userId);
+    let fileLink: string = null;
+    if (file) {
+      const uploadObject = this.uploadFile(file);
+      fileLink = (await uploadObject).Location;
+    }
+
+    return { data: fileLink };
+  }
+
   async create(
     userId: number,
     file: Express.Multer.File,

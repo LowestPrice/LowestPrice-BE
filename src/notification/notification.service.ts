@@ -98,16 +98,36 @@ export class NotificationService {
 
   //* 알림 내역 조회
   async getNotification(userId: number): Promise<object> {
-    const history: Object[] | null = await this.prisma.alarmHistory.findMany({
-      where: {
-        UserId: userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    const history: AlarmHistory[] | null =
+      await this.prisma.alarmHistory.findMany({
+        where: {
+          UserId: userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+    const optionHistory = history.map((product: AlarmHistory) => {
+      if (product.productName.includes(',')) {
+        return {
+          ...product,
+          productName: product.productName.split(',')[0],
+          productOption: product.productName
+            .split(',')
+            .slice(1)
+            .join(',')
+            .trim(),
+        };
+      } else {
+        return {
+          ...product,
+          productOption: null,
+        };
+      }
     });
 
-    return { data: history };
+    return { data: optionHistory };
   }
 
   //* 알림 내역 삭제
