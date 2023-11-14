@@ -16,6 +16,10 @@ export class MypageEntity {
   @IsOptional()
   email?: string;
 
+  @IsNumber()
+  @IsOptional()
+  phone?: number;
+
   @IsString()
   nickname: string;
 
