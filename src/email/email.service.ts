@@ -1,7 +1,11 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { EmailRepository } from './email.repository';
-import { ProductWithPrices } from './util/productWithPrices.interface';
+import {
+  KaKaoTemplate,
+  ProductWithPrices,
+} from './util/productWithPrices.interface';
 import { MailerService } from '@nestjs-modules/mailer';
+import axios from 'axios';
 
 @Injectable()
 export class EmailService {
@@ -51,5 +55,93 @@ export class EmailService {
       .catch((err) => {
         new ConflictException(err);
       });
+  }
+
+  //* 카카오 알림톡 실제 발송
+  async sendKakaoFormat(data: KaKaoTemplate, token: string): Promise<void> {
+    //! 알림 메시지 DB에 저장
+    await this.emailRepository.saveNotification(data);
+    console.log(`알림 메시지 저장`);
+
+    try {
+      const kakaoAlim = await axios.post(
+        `${process.env.KAKAO_ALIM_HOST}/v2/kko/sendAlimTalk `,
+        {
+          msgIdx: '1',
+          countryCode: '82',
+          resMethod: 'PUSH',
+          senderKey: process.env.KAKAO_ALIM_KEY,
+          tmpltCode: 'lowest-price-01',
+          message: `${
+            data.nickname
+          }님 안녕하세요!\n\n내일은 최저가에서 알림 설정하신 [${
+            data.productName
+          }]의 최저가 알림을 보내드립니다.\n\n■ 상품 : ${
+            data.productName
+          }\n■ 가격 : ${Number(
+            data.currentPrice
+          ).toLocaleString()}원\n\n※ 해당 메시지는 고객님께서 요청하신 최저가 알림이 있을 경우 발송됩니다.`,
+          recipient: data.phone,
+          //! 버튼
+          // attach: {
+          //   button: [
+          //     {
+          //       name: '최저가 확인하기',
+          //       type: 'WL',
+          //       url_mobile: `https://lowest-price.store`,
+          //       // url_pc: `https://lowest-price.store/detail/${data.productId}`,
+          //     },
+          //   ],
+          // },
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'bt-token': token,
+          },
+        }
+      );
+      //console.log(kakaoAlim);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  //* 카카오톡 알림 관련 함수
+  async sendNotification() {
+    // 비즈톡 연결
+    let token: string;
+    try {
+      const res = await axios.post(
+        `${process.env.KAKAO_ALIM_HOST}/v2/auth/getToken`,
+        {
+          bsid: process.env.KAKAO_ALIM_ID,
+          passwd: process.env.KAKAO_ALIM_PWD,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      token = res.data.token;
+    } catch (err) {
+      console.log(err);
+    }
+
+    // DB 데이터 조회
+    const alimList: KaKaoTemplate[] =
+      await this.emailRepository.getProductsWithLowerPriceKaKao();
+
+    // DB 조회 결과로 카카오 알림 발송
+    alimList.map(async (list: KaKaoTemplate) => {
+      await this.sendKakaoFormat(list, token);
+    });
+
+    return {
+      success: 'success',
+      status: 200,
+      message: '카톡 알림 발송에 성공했습니다.',
+    };
   }
 }
