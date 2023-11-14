@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, NotFoundException, Injectable } from '@nestjs/common';
 import { PrismaClient, Product } from '@prisma/client';
 import { add } from 'date-fns';
 import {
@@ -6,12 +6,14 @@ import {
   NotFoundCategoryFilterException,
   NotFoundProductException,
 } from 'src/common/exceptions/custom-exception';
+import { shuffle } from 'lodash';
 
 @Injectable()
 export class ProductRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  //* 상품 랜덤 조회
+  //! 상품 랜덤 조회
+  // 사용하지 않는 함수
   async getRandomProducts(isOutOfStock: boolean) {
     // 조건에 따라 whereCondition 객체에 추가
     // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
@@ -25,17 +27,21 @@ export class ProductRepository {
       whereCondition.isOutOfStock = false;
     }
 
+    // 랜덤으로 상품 8개 조회
     const pageSize = 8;
     let ids: number[] = [];
 
+    // raw query를 사용하여 랜덤으로 상품 8개의 id를 조회
     const results = await this.prisma.$queryRawUnsafe<{ productId: number }[]>(
       `SELECT productId FROM Product WHERE isOutOfStock = ${isOutOfStock} ORDER BY RAND() LIMIT ${pageSize};`
     );
 
     console.log('results1: ', results);
 
+    // results 배열에서 productId만 추출하여 ids 배열에 저장
     ids = results.map((item) => item.productId);
 
+    // ids 배열과 isOutOfStock 값을 이용하여 상품 8개를 조회
     const products = await this.prisma.product.findMany({
       where: { AND: [{ productId: { in: ids } }, whereCondition] },
       select: {
@@ -68,7 +74,8 @@ export class ProductRepository {
     return products;
   }
 
-  //* 상품 전체 조회
+  //! 상품 전체 조회
+  // 사용하지 않는 함수
   async getAllProducts(userId: number, isOutOfStock: boolean) {
     // 조건에 따라 whereCondition 객체에 추가
     // 타입스크립트에서 객체의 타입을 정의할 때, isOutOfStock?: boolean; 처럼 ?를 붙이면 해당 프로퍼티가 있어도 되고 없어도 되는 선택적 프로퍼티가 됨
@@ -113,9 +120,10 @@ export class ProductRepository {
     return products;
   }
 
-  //* 상품 상위10개 조회
+  //* 캐러셀 - 상품 10개 랜덤 조회
   async getTop10Products(userId: number) {
-    const products = await this.prisma.product.findMany({
+    // 할인율이 높은 상품 50개 조회, 250,000원 이상의 상품만 조회
+    const topProducts = await this.prisma.product.findMany({
       where: {
         AND: [
           {
@@ -133,15 +141,15 @@ export class ProductRepository {
           },
           {
             currentPrice: {
-              gte: 850000, // currentPrice가 1,000,000 이상인 상품만 조회
+              gte: 250000, // currentPrice가 250,000 이상인 상품만 조회
             },
           },
         ],
       },
       orderBy: {
-        discountRate: 'desc',
+        discountRate: 'desc', // 할인율이 높은 순으로 정렬
       },
-      take: 10,
+      take: 50, // 상위 50개만 가져오기
       select: {
         productId: true,
         coupangItemId: true,
@@ -168,11 +176,15 @@ export class ProductRepository {
       },
     });
 
-    if (products.length === 0) {
-      throw new NotFoundProductException();
+    // 반환되는 상품이 없으면 예외처리
+    if (topProducts.length === 0) {
+      throw new NotFoundException('No products found.');
     }
 
-    return products;
+    // lodash의 shuffle 함수를 사용하여 배열을 랜덤하게 섞은 후, 앞에서부터 10개를 선택
+    const randomProducts = shuffle(topProducts).slice(0, 10);
+
+    return randomProducts;
   }
 
   //* 상품 카테고리별 조회
@@ -181,7 +193,7 @@ export class ProductRepository {
     lastId: number | null, // 마지막으로 조회한 상품의 id 또는 null(첫페이지의 경우)
     isOutOfStock: boolean
   ) {
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    // 카테고리가 존재하는지 확인하는 함수
     const categoryExists = await this.prisma.category.findUnique({
       where: { categoryName: categoryName },
     });
@@ -190,6 +202,8 @@ export class ProductRepository {
       throw new NotFoundCategoryException();
     }
 
+    // whereCondition 객체에 추가하는 기본 조건
+    // 카테고리가 categoryName인 상품만 조회, 할인율이 null인 상품은 제외, currentPrice가 90,000원 초과인 상품만 조회
     const baseCondition = {
       ProductCategory: {
         some: {
@@ -208,21 +222,26 @@ export class ProductRepository {
       },
     };
 
+    // 추가적인 조건을 담을 배열
     const additionalCondition = [];
 
+    // isOutOfStock 값이 false인 경우 (즉, 품절되지 않은 상품만 조회하고 싶은 경우)에만 whereCondition 객체에 추가
     if (isOutOfStock === false) {
       additionalCondition.push({ isOutOfStock: false });
     }
 
+    // whereCondition 객체에 기본 조건과 추가 조건을 AND 연산하여 담습니다.
     const whereCondition = {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    // 커서 페이지네이션을 위한 cursorCondition 객체
     let cursorCondition = {};
 
+    // lastId가 null이면 첫 페이지이므로 cursorCondition 객체를 추가하지 않습니다.
     const isFirstPage = !lastId;
 
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    // lastId가 존재하면 cursorCondition 객체에 추가합니다.
     if (lastId) {
       cursorCondition = {
         cursor: {
@@ -234,10 +253,11 @@ export class ProductRepository {
       };
     }
 
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    // 상품 조회
     const products = await this.prisma.product.findMany({
       where: whereCondition,
       take: 8,
+      // 첫 페이지가 아니고, lastId가 존재하면 cursorCondition 객체를 추가합니다.
       ...(!isFirstPage && cursorCondition),
       select: {
         productId: true,
@@ -265,6 +285,7 @@ export class ProductRepository {
       },
     });
 
+    // ! 추후에 액세서리 카테고리가 추가될 경우 수정할 부분
     // ProductCategory가 여러개인 상품만 필터링
     // const severalCategoryProducts = products.filter(
     //   (product) => product.ProductCategory.length > 1
@@ -293,8 +314,10 @@ export class ProductRepository {
       throw new NotFoundCategoryException();
     }
 
+    // 정렬 기준을 담을 객체를 선언합니다.
     let orderBy = {};
 
+    // switch 문을 사용하여 정렬 기준을 설정합니다.
     switch (filter) {
       case 'discountRate_desc':
         orderBy = {
@@ -338,9 +361,10 @@ export class ProductRepository {
       AND: [baseCondition, ...additionalCondition],
     };
 
+    // 커서 페이지네이션을 위한 cursorCondition 객체를 선언합니다.
     let cursorCondition = {};
 
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
+    // lastId가 있으면 cursorCondition 객체에 추가합니다.
     if (lastId) {
       cursorCondition = {
         cursor: {
@@ -352,6 +376,7 @@ export class ProductRepository {
       };
     }
 
+    // 상품 조회
     const products = await this.prisma.product.findMany({
       where: whereCondition,
       ...cursorCondition,
@@ -472,10 +497,11 @@ export class ProductRepository {
           },
         ],
       },
+      // ProductCategory 모델의 데이터를 포함하여 조회합니다.
       include: {
         ProductCategory: true,
       },
-      take: 5, // 최대 10개의 유사 상품을 가져옵니다.
+      take: 5, // 5개만 가져오기
     });
 
     return similarProducts;

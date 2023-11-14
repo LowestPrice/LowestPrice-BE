@@ -97,16 +97,14 @@ export class ProductService {
     // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
     const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
 
+    // 상품 카테고리별로 조회합니다.
     const products = await this.productRepository.getProductsByCategory(
       categoryName,
       lastId,
       isOutOfStockBoolean
     );
 
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
-
-    console.log('service products: ', products);
-    // 상품 알림 여부 확인
+    // 상품 알림 여부 확인합니다. 
     // Promise 객체의 배열을 받아서 모든 프로미스가 이행됐을때, 하나의 배열로 결과를 반환
     const addAlertProducts = await Promise.all(
       //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
@@ -119,12 +117,10 @@ export class ProductService {
       })
     );
 
-    // 상품 알림 여부를 추가한 배열을 객체로 변환
+    // 상품 알림 여부를 추가한 배열을 객체로 변환합니다. 
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
-    console.log('parseProducts: ', parseProducts);
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
-
+    // 커서페이지네이션을 위해 lastId가 null이면 undefined를 반환합니다.
     if (Object.entries(parseProducts).length === 0) {
       return { undefined };
     }
@@ -140,12 +136,11 @@ export class ProductService {
     userId: number,
     isOutOfStock: string
   ) {
-    console.log(`categoryName: ${categoryName}, filter:${filter}`);
-
     // 쿼리스트링으로 받은 isOutOfStock의 타입을 boolean으로 변환
     // isOutOfStock의 값이 'true'이면 true, 그렇지 않으면 false
     const isOutOfStockBoolean = isOutOfStock === 'true' ? true : false;
 
+    // 상품 카테고리별 필터기능을 조회합니다.
     const products =
       await this.productRepository.getProductsByCategoryAndFilter(
         categoryName,
@@ -154,6 +149,7 @@ export class ProductService {
         isOutOfStockBoolean
       );
 
+    // 상품 알림 여부도 확인합니다. 
     const addAlertProducts = await Promise.all(
       //새로운 배열 생성 -> products 배열의 모든 요소에 대해 비동기 작업 수행
       products.map(async (product) => {
@@ -168,10 +164,12 @@ export class ProductService {
     // 상품 알림 여부를 추가한 배열을 객체로 변환
     const parseProducts = this.parseProductsModel(addAlertProducts);
 
+    // 커서페이지네이션을 위해 lastId가 null이면 undefined를 반환합니다.
     if (Object.entries(parseProducts).length === 0) {
       return { undefined };
     }
 
+    // 상품 알림 여부를 추가한 배열을 객체로 변환해서 반환합니다.
     return { data: parseProducts };
   }
 
@@ -182,14 +180,17 @@ export class ProductService {
       userId
     );
 
+    // 상품 알림 여부 확인
     let isAlertOn = await this.checkAlertStatus(product, userId);
 
+    // 상품 알림 여부를 추가한 객체를 반환
     const parseProduct = this.parseProductModel({ ...product, isAlertOn });
 
     return { data: parseProduct };
   }
 
   //* 상품 알림 등록 함수
+  // boolean 타입으로 알람 등록 여부를 반환
   private async checkAlertStatus(
     product: any,
     userId: number
@@ -211,8 +212,9 @@ export class ProductService {
   parseProductsModel(products: object[]): object {
     return products.map((product) => {
       let obj = {};
-      // 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
+      // Object.entries() 를 사용하여 첫 번째 레벨의 키-값을 대상 객체에 복사합니다.
       Object.entries(product).forEach(([key, value]) => {
+        // value가 객체이고 Date가 아닌 경우
         if (typeof value === 'object' && !(value instanceof Date)) {
           // 두 번째 레벨의 키-값도 대상 객체에 복사합니다.
           if (Array.isArray(value)) {
@@ -224,6 +226,7 @@ export class ProductService {
             // type bigint -> string으로 변환
             obj[key] = value.toString();
           } else {
+            // 그 외의 경우 key-value 를 obj에 직접 추가
             obj[key] = value;
           }
         }
@@ -254,6 +257,8 @@ export class ProductService {
     });
     return obj;
   }
+
+  //* 유사 상품 조회
   public async getSimilarProducts(
     productId: number,
     userId: number
