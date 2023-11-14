@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   userId       Int       @id @default(autoincrement()) @map("id")
-  phone        Int?
+  phone        String?
   email        String?   
   nickname     String
   snsId        String
