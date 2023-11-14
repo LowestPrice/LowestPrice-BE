@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsPhoneNumber,
   IsString,
 } from 'class-validator';
 
@@ -16,9 +17,9 @@ export class MypageEntity {
   @IsOptional()
   email?: string;
 
-  @IsNumber()
+  @IsPhoneNumber('KR')
   @IsOptional()
-  phone?: number;
+  phone?: string;
 
   @IsString()
   nickname: string;
