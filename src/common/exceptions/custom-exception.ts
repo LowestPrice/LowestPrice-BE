@@ -61,3 +61,10 @@ export class NoUpdateProfileException extends HttpException {
     super('프로필에 변경된 정보가 없습니다.', HttpStatus.BAD_REQUEST);
   }
 }
+
+// 알림 내역 조회
+export class NotFoundNotificationException extends HttpException {
+  constructor() {
+    super('해당 알림 내역이 존재하지 않습니다.', HttpStatus.NOT_FOUND);
+  }
+}
