@@ -52,6 +52,7 @@ export class ProductController {
   @Get('top')
   @UseGuards(OptionalJwtAuthGuard)
   async getTopDiscountedProducts(@Req() req: CustomRequest): Promise<object> {
+    // userId를 확인하는 이유는 상품 알림 여부를 확인하기 위함
     const userId: number = req.user ? req.user.userId : null;
 
     return this.productService.getTop10Products(userId);
@@ -61,18 +62,22 @@ export class ProductController {
   @Get('category/:categoryName')
   @UseGuards(OptionalJwtAuthGuard)
   async getProductsByCategory(
+    // 카테고리 이름
     @Param('categoryName') categoryName: string,
+    // 페이지네이션을 위한 lastId
     @Query('lastId') lastIdString: string,
+    // 품절 상품 조회 여부
     @Query('isOutOfStock') isOutOfStock: string,
+    // userId를 가져오기 위해 req 객체를 전달
     @Req() req: CustomRequest
   ): Promise<object> {
     // req.user가 존재하면 userId를 가져오고, 그렇지 않으면 null 또는 undefined를 설정해 분기처리
     const userId: number = req.user ? req.user.userId : null;
 
-    console.log('lastId: ', lastIdString, 'typeOf: ', typeof lastIdString);
+    // lastId가 있으면 Number 형태로 변환, 없으면 null로 설정
     const lastId = Number(lastIdString) ? Number(lastIdString) : null;
-    console.log('lastId: ', lastId, 'typeOf: ', typeof lastId);
 
+    // 상품 카테고리별 조회
     const productList = await this.productService.getProductsByCategory(
       categoryName,
       userId,

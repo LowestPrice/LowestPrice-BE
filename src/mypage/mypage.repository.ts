@@ -15,6 +15,7 @@ export class MypageRepository {
       select: {
         nickname: true,
         image: true,
+        phone: true,
       },
     });
 
@@ -30,6 +31,7 @@ export class MypageRepository {
       data: {
         nickname: updateMypageDTO.nickname,
         image: updateMypageDTO.image,
+        phone: updateMypageDTO.phone,
       },
     });
 
