@@ -447,6 +447,11 @@ export class ProductRepository {
     if (!product) {
       throw new NotFoundProductException();
     }
+    // productPartnersUrl이 있는 경우 productUrl에 productPartnersUrl 값을 담아서 반환
+    if (product.productPartnersUrl) {
+      product.productUrl = product.productPartnersUrl;
+    }
+    // productPartnersUrl이 없는 경우 productUrl은 그대로 반환됩니다.
 
     return product;
   }
