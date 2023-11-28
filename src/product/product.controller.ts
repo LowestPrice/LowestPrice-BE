@@ -104,6 +104,7 @@ export class ProductController {
     // lastId가 있으면 Number 형태로 변환, 없으면 null로 설정
     const lastId = Number(lastIdString) ? Number(lastIdString) : null;
 
+
     // 상품 카테고리별 조회
     const productList = await this.productService.getProductsByCategory(
       categoryName,
