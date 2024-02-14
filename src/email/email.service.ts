@@ -71,7 +71,7 @@ export class EmailService {
           countryCode: '82',
           resMethod: 'PUSH',
           senderKey: process.env.KAKAO_ALIM_KEY,
-          tmpltCode: 'lowest-price-01',
+          tmpltCode: 'lowest-price-02',
           message: `${
             data.nickname
           }님 안녕하세요!\n\n내일은 최저가에서 알림 설정하신 [${
@@ -83,16 +83,16 @@ export class EmailService {
           ).toLocaleString()}원\n\n※ 해당 메시지는 고객님께서 요청하신 최저가 알림이 있을 경우 발송됩니다.`,
           recipient: data.phone,
           //! 버튼
-          // attach: {
-          //   button: [
-          //     {
-          //       name: '최저가 확인하기',
-          //       type: 'WL',
-          //       url_mobile: `https://lowest-price.store`,
-          //       // url_pc: `https://lowest-price.store/detail/${data.productId}`,
-          //     },
-          //   ],
-          // },
+          attach: {
+            button: [
+              {
+                name: '최저가 확인하기',
+                type: 'WL',
+                url_mobile: `https://lowest-price.store/detail/${data.productId}`,
+                url_pc: `https://lowest-price.store/detail/${data.productId}`,
+              },
+            ],
+          },
         },
         {
           headers: {
