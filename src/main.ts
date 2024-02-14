@@ -32,10 +32,10 @@ async function bootstrap() {
   // app.use(cookieParser(process.env.COOKIE_SECRET));
 
   const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    .setTitle('LowestPrice example')
+    .setDescription('The LowestPrice API description')
     .setVersion('1.0')
-    .addTag('cats')
+    .addTag('LowestPrice API')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
